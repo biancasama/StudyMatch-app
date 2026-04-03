@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { GoogleGenAI, Type, FunctionDeclaration } from "@google/genai";
+import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 
 // --- Types ---
 
@@ -148,18 +149,18 @@ const PRELOADED_STUDENTS: Student[] = [
 ];
 
 const BUILDINGS = [
-  { name: "Cofrin Library (CL)", address: "2420 Nicolet Dr, Green Bay, WI 54311", x: 40, y: 40, w: 20, h: 20, color: "#cbd5e1" },
-  { name: "University Union (UU)", address: "2420 Nicolet Dr, Green Bay, WI 54311", x: 30, y: 65, w: 25, h: 15, color: "#e2e8f0" },
-  { name: "Student Services (SS)", address: "2420 Nicolet Dr, Green Bay, WI 54311", x: 35, y: 55, w: 15, h: 10, color: "#f1f5f9" },
-  { name: "MAC Hall (MAC)", address: "2420 Nicolet Dr, Green Bay, WI 54311", x: 65, y: 45, w: 15, h: 15, color: "#e2e8f0" },
-  { name: "Rose Hall (RH)", address: "2420 Nicolet Dr, Green Bay, WI 54311", x: 65, y: 65, w: 15, h: 15, color: "#cbd5e1" },
-  { name: "Wood Hall (WH)", address: "2420 Nicolet Dr, Green Bay, WI 54311", x: 85, y: 65, w: 10, h: 15, color: "#e2e8f0" },
-  { name: "Environmental Sci (ES)", address: "2420 Nicolet Dr, Green Bay, WI 54311", x: 20, y: 20, w: 20, h: 15, color: "#cbd5e1" },
-  { name: "Laboratory Sci (LS)", address: "2420 Nicolet Dr, Green Bay, WI 54311", x: 45, y: 20, w: 15, h: 15, color: "#e2e8f0" },
-  { name: "Theatre Hall (TH)", address: "2420 Nicolet Dr, Green Bay, WI 54311", x: 10, y: 40, w: 15, h: 15, color: "#cbd5e1" },
-  { name: "Studio Arts (SA)", address: "2420 Nicolet Dr, Green Bay, WI 54311", x: 10, y: 55, w: 15, h: 15, color: "#e2e8f0" },
-  { name: "Kress Center (KEC)", address: "2358 Leon Bond Dr, Green Bay, WI 54311", x: 75, y: 10, w: 20, h: 20, color: "#cbd5e1" },
-  { name: "Weidner Center", address: "2420 Nicolet Dr, Green Bay, WI 54311", x: 10, y: 5, w: 20, h: 10, color: "#e2e8f0" },
+  { name: "Cofrin Library (CL)", address: "2420 Nicolet Dr, Green Bay, WI 54311", features: ["Study rooms", "Coffee shop", "Computer lab"], x: 40, y: 40, w: 20, h: 20, color: "#cbd5e1" },
+  { name: "University Union (UU)", address: "2420 Nicolet Dr, Green Bay, WI 54311", features: ["Dining hall", "Bookstore", "Game room"], x: 30, y: 65, w: 25, h: 15, color: "#e2e8f0" },
+  { name: "Student Services (SS)", address: "2420 Nicolet Dr, Green Bay, WI 54311", features: ["Advising", "Financial aid", "Career center"], x: 35, y: 55, w: 15, h: 10, color: "#f1f5f9" },
+  { name: "MAC Hall (MAC)", address: "2420 Nicolet Dr, Green Bay, WI 54311", features: ["Classrooms", "Lecture halls"], x: 65, y: 45, w: 15, h: 15, color: "#e2e8f0" },
+  { name: "Rose Hall (RH)", address: "2420 Nicolet Dr, Green Bay, WI 54311", features: ["Classrooms", "Labs"], x: 65, y: 65, w: 15, h: 15, color: "#cbd5e1" },
+  { name: "Wood Hall (WH)", address: "2420 Nicolet Dr, Green Bay, WI 54311", features: ["Classrooms", "Faculty offices"], x: 85, y: 65, w: 10, h: 15, color: "#e2e8f0" },
+  { name: "Environmental Sci (ES)", address: "2420 Nicolet Dr, Green Bay, WI 54311", features: ["Labs", "Research center"], x: 20, y: 20, w: 20, h: 15, color: "#cbd5e1" },
+  { name: "Laboratory Sci (LS)", address: "2420 Nicolet Dr, Green Bay, WI 54311", features: ["Science labs", "Classrooms"], x: 45, y: 20, w: 15, h: 15, color: "#e2e8f0" },
+  { name: "Theatre Hall (TH)", address: "2420 Nicolet Dr, Green Bay, WI 54311", features: ["Theatre", "Art studios"], x: 10, y: 40, w: 15, h: 15, color: "#cbd5e1" },
+  { name: "Studio Arts (SA)", address: "2420 Nicolet Dr, Green Bay, WI 54311", features: ["Art studios", "Gallery"], x: 10, y: 55, w: 15, h: 15, color: "#e2e8f0" },
+  { name: "Kress Center (KEC)", address: "2358 Leon Bond Dr, Green Bay, WI 54311", features: ["Gym", "Pool", "Fitness center"], x: 75, y: 10, w: 20, h: 20, color: "#cbd5e1" },
+  { name: "Weidner Center", address: "2420 Nicolet Dr, Green Bay, WI 54311", features: ["Concert hall", "Events"], x: 10, y: 5, w: 20, h: 10, color: "#e2e8f0" },
 ];
 
 const DECORATIONS = [
@@ -368,7 +369,7 @@ const Avatar = ({ student, isMatched, onClick, isMissedClassMode, targetCourse, 
   if (isUser) {
     return (
       <motion.div
-        className="absolute z-30 animate-bob group"
+        className="absolute z-30 animate-subtle-bob group"
         style={{ left: `50%`, top: `50%`, transform: 'translate(-50%, -100%)' }}
       >
         <div className="relative flex flex-col items-center">
@@ -393,7 +394,7 @@ const Avatar = ({ student, isMatched, onClick, isMissedClassMode, targetCourse, 
 
   return (
     <motion.div
-      className={`absolute cursor-pointer z-10 ${opacity} transition-all duration-500 ${shouldGlow ? 'animate-flutter-fast' : 'animate-bob'}`}
+      className={`absolute cursor-pointer z-10 ${opacity} transition-all duration-500 animate-subtle-bob ${shouldGlow ? 'animate-flutter-fast' : ''}`}
       animate={{ left: `${pos.x}%`, top: `${pos.y}%` }}
       transition={{ duration: 3, ease: "linear" }}
       onClick={onClick}
@@ -918,128 +919,139 @@ If the user mentions "meet", suggest meeting at ${BUILDINGS[Math.floor(Math.rand
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-[var(--color-uwgb-bg)]"
+              className="absolute inset-0 w-full h-full bg-[var(--color-uwgb-bg)]"
             >
-              {/* Campus Map Background */}
-              <div className="absolute inset-0 p-0">
-                <div className="relative w-full h-full bg-[#f0ede5] overflow-hidden">
-                  <div className="absolute inset-0 wavy-bg opacity-20 pointer-events-none" />
-                  
-                  {/* Phoenix Logo Watermark */}
-                  <div className="absolute top-4 left-4 opacity-10 pointer-events-none z-10">
-                    <svg width="60" height="60" viewBox="0 0 24 24" fill="var(--color-uwgb-primary)" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M12 2L2 22h20L12 2zm0 4.5l6.5 13h-13L12 6.5z"/>
-                    </svg>
-                  </div>
-                  
-                  {/* Student Plaza */}
-                  <div className="absolute left-[35%] top-[60%] w-[10%] h-[5%] bg-[#e6e2d6] rounded-full pointer-events-none flex items-center justify-center">
-                    <span className="text-[6px] font-bold text-slate-500">Plaza</span>
-                  </div>
-
-                  {/* The Arboretum (Forest) */}
-                  <div className="absolute right-0 top-0 w-[25%] h-full bg-[#d4e6c3] pointer-events-none flex flex-col items-center justify-center gap-2">
-                    <Trees size={24} className="text-[#8cc63f]" />
-                  </div>
-
-                  {/* The Bay (Water) */}
-                  <div className="absolute left-0 top-0 w-[35%] h-[25%] bg-[#a2d5f2] rounded-br-[100px] pointer-events-none flex items-center justify-center">
-                    <span className="text-[10px] font-bold text-blue-500/50 -rotate-12">The Bay</span>
-                  </div>
-
-                  {/* Concourses (Footpaths) */}
-                  {CONCOURSES.map((c, i) => (
-                    <div 
-                      key={`c-${i}`}
-                      className="absolute bg-[#e6e2d6]"
-                      style={{ 
-                        left: `${c.x}%`, 
-                        top: `${c.y}%`, 
-                        width: `${c.w}%`, 
-                        height: `${c.h}%`,
-                      }}
-                    />
-                  ))}
-
-                  {/* Buildings */}
-                  {BUILDINGS.map((b, i) => (
-                    <div 
-                      key={i}
-                      onClick={() => handleBuildingClick(b)}
-                      className={`absolute flex items-center justify-center p-2 text-center cursor-pointer transition-all ${selectedBuilding?.name === b.name ? 'z-10 scale-105' : 'hover:scale-105'}`}
-                      style={{ 
-                        left: `${b.x}%`, 
-                        top: `${b.y}%`, 
-                        width: `${b.w}%`, 
-                        height: `${b.h}%`,
-                      }}
-                    >
-                      <div className="absolute inset-0 bg-white shadow-[0_4px_0_rgba(0,0,0,0.05)] border border-slate-100 rounded-sm" />
-                      <div className="relative z-10">
-                        <span className="text-[8px] font-bold text-slate-700 leading-tight whitespace-nowrap">{b.name.split(' (')[0]}</span>
+              <div className="w-full h-full">
+                <TransformWrapper
+                  initialScale={1}
+                  minScale={0.5}
+                  maxScale={3}
+                  centerOnInit={true}
+                >
+                  <TransformComponent
+                    wrapperClass="w-full h-full"
+                    contentClass="w-full h-full"
+                  >
+                    <div className="relative w-full h-full bg-[#f0ede5] overflow-hidden cursor-grab active:cursor-grabbing">
+                      <div className="absolute inset-0 wavy-bg opacity-20 pointer-events-none" />
+                      
+                      {/* Phoenix Logo Watermark */}
+                      <div className="absolute top-4 left-4 opacity-10 pointer-events-none z-10">
+                        <svg width="60" height="60" viewBox="0 0 24 24" fill="var(--color-uwgb-primary)" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M12 2L2 22h20L12 2zm0 4.5l6.5 13h-13L12 6.5z"/>
+                        </svg>
                       </div>
+                      
+                      {/* Student Plaza */}
+                      <div className="absolute left-[35%] top-[60%] w-[10%] h-[5%] bg-[#e6e2d6] rounded-full pointer-events-none flex items-center justify-center">
+                        <span className="text-[6px] font-bold text-slate-500">Plaza</span>
+                      </div>
+
+                      {/* The Arboretum (Forest) */}
+                      <div className="absolute right-0 top-0 w-[25%] h-full bg-[#d4e6c3] pointer-events-none flex flex-col items-center justify-center gap-2">
+                        <Trees size={24} className="text-[#8cc63f]" />
+                      </div>
+
+                      {/* The Bay (Water) */}
+                      <div className="absolute left-0 top-0 w-[35%] h-[25%] bg-[#a2d5f2] rounded-br-[100px] pointer-events-none flex items-center justify-center">
+                        <span className="text-[10px] font-bold text-blue-500/50 -rotate-12">The Bay</span>
+                      </div>
+
+                      {/* Concourses (Footpaths) */}
+                    {CONCOURSES.map((c, i) => (
+                      <div 
+                        key={`c-${i}`}
+                        className="absolute bg-[#e6e2d6]"
+                        style={{ 
+                          left: `${c.x}%`, 
+                          top: `${c.y}%`, 
+                          width: `${c.w}%`, 
+                          height: `${c.h}%`,
+                        }}
+                      />
+                    ))}
+
+                    {/* Buildings */}
+                    {BUILDINGS.map((b, i) => (
+                      <div 
+                        key={i}
+                        onClick={() => handleBuildingClick(b)}
+                        className={`absolute flex items-center justify-center p-2 text-center cursor-pointer transition-all ${selectedBuilding?.name === b.name ? 'z-10 scale-105' : 'hover:scale-105'}`}
+                        style={{ 
+                          left: `${b.x}%`, 
+                          top: `${b.y}%`, 
+                          width: `${b.w}%`, 
+                          height: `${b.h}%`,
+                        }}
+                      >
+                        <div className="absolute inset-0 bg-white shadow-[0_4px_0_rgba(0,0,0,0.05)] border border-slate-100 rounded-sm" />
+                        <div className="relative z-10">
+                          <span className="text-[8px] font-bold text-slate-700 leading-tight whitespace-nowrap">{b.name.split(' (')[0]}</span>
+                        </div>
+                      </div>
+                    ))}
+
+                    {/* Decorations (Trees) */}
+                    {DECORATIONS.map((d, i) => (
+                      <div 
+                        key={`d-${i}`}
+                        className="absolute w-4 h-4 bg-[#8cc63f] rounded-full shadow-sm pointer-events-none"
+                        style={{ left: `${d.x}%`, top: `${d.y}%`, transform: 'translate(-50%, -50%)' }}
+                      />
+                    ))}
+
+                    {/* Landmarks */}
+                    {LANDMARKS.map((l, i) => (
+                      <div 
+                        key={`l-${i}`}
+                        className="absolute flex flex-col items-center group cursor-help"
+                        style={{ left: `${l.x}%`, top: `${l.y}%` }}
+                      >
+                        <div className="bg-white/90 p-1 rounded-full shadow-sm border border-slate-100" style={{ color: l.color }}>
+                          {l.icon === "zap" && <Zap size={12} fill="currentColor" />}
+                          {l.icon === "tree" && <TreePine size={12} fill="currentColor" />}
+                          {l.icon === "trees" && <Trees size={12} fill="currentColor" />}
+                          {l.icon === "info" && <Info size={12} fill="currentColor" />}
+                          {l.icon === "users" && <UsersIcon size={12} fill="currentColor" />}
+                        </div>
+                        <div className="absolute bottom-full mb-1 bg-white text-slate-800 text-[8px] font-bold px-1.5 py-0.5 rounded shadow-sm opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                          {l.name}
+                        </div>
+                      </div>
+                    ))}
+
+                    {/* Avatars */}
+                    <Avatar isUser userAppearance={userProfile.appearance} userBio={userProfile.bio} />
+                    {PRELOADED_STUDENTS.map(student => (
+                      <Avatar 
+                        key={student.id} 
+                        student={student} 
+                        isMatched={isMatched(student)}
+                        isMissedClassMode={!!missedCourse}
+                        targetCourse={missedCourse}
+                        onClick={() => handleStudentClick(student)}
+                        matchScore={matchScores[student.id] || getHeuristicScore(student)}
+                        isConnected={connectedStudents.includes(student.id)}
+                      />
+                    ))}
+
+                    {/* Meeting Spot Pin (if selected) */}
+                    {selectedStudent && meetingSpot && (
+                      <motion.div 
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        className="absolute z-20 text-red-500"
+                        style={{ left: `${meetingSpot.x + meetingSpot.w / 2}%`, top: `${meetingSpot.y + meetingSpot.h / 2}%`, transform: 'translate(-50%, -50%)' }}
+                      >
+                        <MapPin className="fill-red-500 text-white" size={32} />
+                        <div className="bg-white px-2 py-1 rounded shadow-lg text-[10px] font-bold whitespace-nowrap -mt-1 absolute left-1/2 -translate-x-1/2">
+                          Suggested Spot: {meetingSpot.name.split(' (')[0]}
+                        </div>
+                      </motion.div>
+                    )}
                     </div>
-                  ))}
-
-                  {/* Decorations (Trees) */}
-                  {DECORATIONS.map((d, i) => (
-                    <div 
-                      key={`d-${i}`}
-                      className="absolute w-4 h-4 bg-[#8cc63f] rounded-full shadow-sm pointer-events-none"
-                      style={{ left: `${d.x}%`, top: `${d.y}%`, transform: 'translate(-50%, -50%)' }}
-                    />
-                  ))}
-
-                  {/* Landmarks */}
-                  {LANDMARKS.map((l, i) => (
-                    <div 
-                      key={`l-${i}`}
-                      className="absolute flex flex-col items-center group cursor-help"
-                      style={{ left: `${l.x}%`, top: `${l.y}%` }}
-                    >
-                      <div className="bg-white/90 p-1 rounded-full shadow-sm border border-slate-100" style={{ color: l.color }}>
-                        {l.icon === "zap" && <Zap size={12} fill="currentColor" />}
-                        {l.icon === "tree" && <TreePine size={12} fill="currentColor" />}
-                        {l.icon === "trees" && <Trees size={12} fill="currentColor" />}
-                        {l.icon === "info" && <Info size={12} fill="currentColor" />}
-                        {l.icon === "users" && <UsersIcon size={12} fill="currentColor" />}
-                      </div>
-                      <div className="absolute bottom-full mb-1 bg-white text-slate-800 text-[8px] font-bold px-1.5 py-0.5 rounded shadow-sm opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-                        {l.name}
-                      </div>
-                    </div>
-                  ))}
-
-                  {/* Avatars */}
-                  <Avatar isUser userAppearance={userProfile.appearance} userBio={userProfile.bio} />
-                  {PRELOADED_STUDENTS.map(student => (
-                    <Avatar 
-                      key={student.id} 
-                      student={student} 
-                      isMatched={isMatched(student)}
-                      isMissedClassMode={!!missedCourse}
-                      targetCourse={missedCourse}
-                      onClick={() => handleStudentClick(student)}
-                      matchScore={matchScores[student.id] || getHeuristicScore(student)}
-                      isConnected={connectedStudents.includes(student.id)}
-                    />
-                  ))}
-
-                  {/* Meeting Spot Pin (if selected) */}
-                  {selectedStudent && meetingSpot && (
-                    <motion.div 
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      className="absolute z-20 text-red-500"
-                      style={{ left: `${meetingSpot.x + meetingSpot.w / 2}%`, top: `${meetingSpot.y + meetingSpot.h / 2}%`, transform: 'translate(-50%, -50%)' }}
-                    >
-                      <MapPin className="fill-red-500 text-white" size={32} />
-                      <div className="bg-white px-2 py-1 rounded shadow-lg text-[10px] font-bold whitespace-nowrap -mt-1 absolute left-1/2 -translate-x-1/2">
-                        Suggested Spot: {meetingSpot.name.split(' (')[0]}
-                      </div>
-                    </motion.div>
-                  )}
-                </div>
+                  </TransformComponent>
+                </TransformWrapper>
               </div>
             </motion.div>
           )}
@@ -1589,12 +1601,13 @@ If the user mentions "meet", suggest meeting at ${BUILDINGS[Math.floor(Math.rand
                       </h5>
                       <ul className="space-y-2">
                         {matchExplanation.bullets.map((bullet, i) => (
-                          <li key={i} className="text-[16px] text-[var(--color-uwgb-text)] leading-[1.6]">
-                            {bullet}
+                          <li key={i} className="text-[16px] text-[var(--color-uwgb-text)] leading-[1.6] flex items-start gap-2">
+                            <span className="shrink-0">✨</span>
+                            <span className="line-clamp-3">{bullet}</span>
                           </li>
                         ))}
                       </ul>
-                      <div className="inline-block bg-[var(--color-uwgb-accent)] text-white px-3 py-1 rounded-full text-sm font-bold mt-2">
+                      <div className="inline-block bg-[var(--color-uwgb-accent)] text-white px-4 py-1 rounded-full text-sm font-bold mt-3">
                         {matchExplanation.vibeTag}
                       </div>
                       
@@ -1606,7 +1619,7 @@ If the user mentions "meet", suggest meeting at ${BUILDINGS[Math.floor(Math.rand
                       
                       <button 
                         onClick={() => setShowFullExplanation(!showFullExplanation)}
-                        className="text-[var(--color-uwgb-accent)] text-sm font-bold mt-2 block"
+                        className="text-[var(--color-uwgb-accent)] text-sm font-bold mt-3 block hover:underline"
                       >
                         {showFullExplanation ? "Show less" : "Read more"}
                       </button>
@@ -1720,6 +1733,11 @@ If the user mentions "meet", suggest meeting at ${BUILDINGS[Math.floor(Math.rand
                   <div>
                     <h3 className="text-xl font-bold leading-tight">{selectedBuilding.name}</h3>
                     <p className="text-sm text-slate-500 mt-1">{selectedBuilding.address}</p>
+                    <div className="flex flex-wrap gap-2 mt-3">
+                      {selectedBuilding.features.map((feature, i) => (
+                        <span key={i} className="bg-slate-100 text-slate-600 text-[10px] font-bold px-2 py-1 rounded-full">{feature}</span>
+                      ))}
+                    </div>
                   </div>
                 </div>
                 <button 
