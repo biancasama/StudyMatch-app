@@ -483,6 +483,7 @@ export default function App() {
   const [mcpUsed, setMcpUsed] = useState(false);
   const [isLoadingMatch, setIsLoadingMatch] = useState(false);
   const [missedCourse, setMissedCourse] = useState<string | null>(null);
+  const [selectedCourseFilter, setSelectedCourseFilter] = useState<string | null>(null);
   const [showFullExplanation, setShowFullExplanation] = useState(false);
 
   // Match Celebration State
@@ -908,9 +909,12 @@ If the user mentions "meet", suggest meeting at ${BUILDINGS[Math.floor(Math.rand
           </div>
           <h1 className="font-heading font-bold text-xl tracking-tight text-white">StudyMatch <span className="text-white/70 font-normal">UWGB</span></h1>
         </div>
-        {activeTab === "map" && missedCourse && (
+        {activeTab === "map" && (missedCourse || selectedCourseFilter) && (
           <button 
-            onClick={() => setMissedCourse(null)}
+            onClick={() => {
+              setMissedCourse(null);
+              setSelectedCourseFilter(null);
+            }}
             className="flex items-center gap-1 bg-red-100 text-red-700 px-2 py-1 rounded-full text-xs font-bold"
           >
             <X size={12} /> Clear Filter
@@ -929,6 +933,21 @@ If the user mentions "meet", suggest meeting at ${BUILDINGS[Math.floor(Math.rand
               exit={{ opacity: 0 }}
               className="absolute inset-0 w-full h-full bg-[var(--color-uwgb-bg)]"
             >
+              {/* Course Filter */}
+              {!missedCourse && (
+                <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 w-11/12 max-w-sm">
+                  <select 
+                    className="w-full p-3 rounded-xl border border-slate-200 shadow-lg bg-white/90 backdrop-blur-sm text-sm font-medium text-slate-700 outline-none focus:border-[var(--color-uwgb-accent)]"
+                    value={selectedCourseFilter || ""}
+                    onChange={(e) => setSelectedCourseFilter(e.target.value || null)}
+                  >
+                    <option value="">Filter by Course...</option>
+                    {UWGB_COURSES.map(course => (
+                      <option key={course} value={course}>{course}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
               <div className="w-full h-full">
                 <TransformWrapper
                   initialScale={1}
@@ -1030,7 +1049,9 @@ If the user mentions "meet", suggest meeting at ${BUILDINGS[Math.floor(Math.rand
 
                     {/* Avatars */}
                     <Avatar isUser userAppearance={userProfile.appearance} userBio={userProfile.bio} />
-                    {PRELOADED_STUDENTS.map(student => (
+                    {PRELOADED_STUDENTS
+                      .filter(student => !selectedCourseFilter || student.courses.includes(selectedCourseFilter))
+                      .map(student => (
                       <Avatar 
                         key={student.id} 
                         student={student} 
