@@ -1,5 +1,9 @@
 # StudyMatch: UWGB Study Buddy Finder
 
+## 🔗 Links
+- **Live App:** [https://studymatch-uwgb-178201608731.us-west1.run.app/](https://studymatch-uwgb-178201608731.us-west1.run.app/)
+- **Video Demo:** [Watch the Demo](https://drive.google.com/file/d/1t3QF-HX0MFdFor3KPza1Bv4XAZEv4NjE/view?usp=sharing)
+
 StudyMatch is an interactive, Gen Z-focused platform designed to help University of Wisconsin-Green Bay (UWGB) students find study partners, coordinate meeting spots, and share class notes.
 
 **Built as a solo project for the [Build with AI 2026](https://gdg.community.dev/events/details/google-gdg-on-campus-at-uw-green-bay-presents-build-with-ai-2026/) hackathon hosted by GDG on Campus at UW-Green Bay.**
