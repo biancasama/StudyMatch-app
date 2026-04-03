@@ -1,0 +1,5 @@
+{
+  "name": "StudyMatch UWGB",
+  "description": "A mobile-first web app for UWGB students to find study partners on a 2D campus map.",
+  "requestFramePermissions": []
+}
