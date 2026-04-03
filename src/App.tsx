@@ -30,6 +30,12 @@ import { GoogleGenAI } from "@google/genai";
 type Personality = "introvert" | "ambivert" | "extrovert";
 type LearningStyle = "visual" | "auditory" | "reading/writing" | "kinesthetic";
 
+interface AvatarAppearance {
+  skinTone: string;
+  hairColor: string;
+  outfitColor: string;
+}
+
 interface Student {
   id: string;
   name: string;
@@ -39,6 +45,7 @@ interface Student {
   learningStyle: LearningStyle;
   availability: string;
   avatarColor: string;
+  appearance: AvatarAppearance;
   initialX: number;
   initialY: number;
 }
@@ -50,6 +57,7 @@ interface UserProfile {
   personality: Personality;
   learningStyle: LearningStyle;
   availability: string;
+  appearance: AvatarAppearance;
 }
 
 // --- Constants ---
@@ -75,6 +83,7 @@ const PRELOADED_STUDENTS: Student[] = [
     learningStyle: "visual",
     availability: "Mon/Wed Afternoons",
     avatarColor: "#FF6B6B",
+    appearance: { skinTone: "#f0b896", hairColor: "#b55239", outfitColor: "#FF6B6B" },
     initialX: 20,
     initialY: 30,
   },
@@ -87,6 +96,7 @@ const PRELOADED_STUDENTS: Student[] = [
     learningStyle: "reading/writing",
     availability: "Tue/Thu Mornings",
     avatarColor: "#4ECDC4",
+    appearance: { skinTone: "#8d5524", hairColor: "#000000", outfitColor: "#4ECDC4" },
     initialX: 70,
     initialY: 20,
   },
@@ -99,6 +109,7 @@ const PRELOADED_STUDENTS: Student[] = [
     learningStyle: "kinesthetic",
     availability: "Weekends",
     avatarColor: "#FFE66D",
+    appearance: { skinTone: "#fadcbc", hairColor: "#e6ce94", outfitColor: "#FFE66D" },
     initialX: 40,
     initialY: 60,
   },
@@ -111,6 +122,7 @@ const PRELOADED_STUDENTS: Student[] = [
     learningStyle: "auditory",
     availability: "Evenings",
     avatarColor: "#1A535C",
+    appearance: { skinTone: "#c68642", hairColor: "#4a4a4a", outfitColor: "#1A535C" },
     initialX: 80,
     initialY: 70,
   },
@@ -123,6 +135,7 @@ const PRELOADED_STUDENTS: Student[] = [
     learningStyle: "visual",
     availability: "Friday All Day",
     avatarColor: "#F7FFF7",
+    appearance: { skinTone: "#3d2c23", hairColor: "#000000", outfitColor: "#9333ea" },
     initialX: 10,
     initialY: 80,
   },
@@ -193,6 +206,40 @@ const COURSE_COLORS: Record<string, string> = {
 
 // --- Components ---
 
+const BitmojiAvatar = ({ appearance, size = "normal" }: { appearance: AvatarAppearance, size?: "normal" | "large" }) => {
+  const scale = size === "large" ? 1.5 : 1;
+  return (
+    <svg width={40 * scale} height={70 * scale} viewBox="0 0 40 70" fill="none" xmlns="http://www.w3.org/2000/svg" className="drop-shadow-md">
+      {/* Legs */}
+      <path d="M14 50 L14 65 L10 65 L10 50 Z" fill="#1e293b" />
+      <path d="M26 50 L26 65 L30 65 L30 50 Z" fill="#1e293b" />
+      {/* Shoes */}
+      <ellipse cx="12" cy="66" rx="4" ry="2" fill="#0f172a" />
+      <ellipse cx="28" cy="66" rx="4" ry="2" fill="#0f172a" />
+      
+      {/* Body/Outfit */}
+      <path d="M10 30 C10 25 30 25 30 30 L32 50 C32 52 8 52 8 50 Z" fill={appearance.outfitColor} />
+      {/* Arms */}
+      <path d="M10 30 C5 35 5 45 8 48" stroke={appearance.outfitColor} strokeWidth="4" strokeLinecap="round" />
+      <path d="M30 30 C35 35 35 45 32 48" stroke={appearance.outfitColor} strokeWidth="4" strokeLinecap="round" />
+      {/* Hands */}
+      <circle cx="8" cy="48" r="3" fill={appearance.skinTone} />
+      <circle cx="32" cy="48" r="3" fill={appearance.skinTone} />
+
+      {/* Head */}
+      <circle cx="20" cy="18" r="14" fill={appearance.skinTone} />
+      {/* Hair */}
+      <path d="M4 18 C4 5 36 5 36 18 C36 10 20 2 4 18 Z" fill={appearance.hairColor} />
+      
+      {/* Eyes */}
+      <circle cx="15" cy="16" r="2" fill="#000" />
+      <circle cx="25" cy="16" r="2" fill="#000" />
+      {/* Smile */}
+      <path d="M15 22 Q20 26 25 22" stroke="#000" strokeWidth="1.5" strokeLinecap="round" fill="none" />
+    </svg>
+  );
+};
+
 interface AvatarProps {
   student?: Student;
   isMatched?: boolean;
@@ -200,10 +247,11 @@ interface AvatarProps {
   isMissedClassMode?: boolean;
   targetCourse?: string | null;
   isUser?: boolean;
+  userAppearance?: AvatarAppearance;
   key?: string | number;
 }
 
-const Avatar = ({ student, isMatched, onClick, isMissedClassMode, targetCourse, isUser }: AvatarProps) => {
+const Avatar = ({ student, isMatched, onClick, isMissedClassMode, targetCourse, isUser, userAppearance }: AvatarProps) => {
   const [pos, setPos] = useState(isUser ? { x: 50, y: 50 } : { x: student!.initialX, y: student!.initialY });
   
   useEffect(() => {
@@ -221,15 +269,12 @@ const Avatar = ({ student, isMatched, onClick, isMissedClassMode, targetCourse, 
     return (
       <motion.div
         className="absolute z-30"
-        style={{ left: `50%`, top: `50%`, transform: 'translate(-50%, -50%)' }}
+        style={{ left: `50%`, top: `50%`, transform: 'translate(-50%, -100%)' }}
       >
         <div className="relative flex flex-col items-center">
-          <div className="absolute inset-0 -m-2 bg-blue-400/40 rounded-full blur-md animate-pulse" />
-          <div className="w-10 h-10 rounded-full border-4 border-white shadow-xl bg-blue-500 flex items-center justify-center overflow-hidden">
-            <User size={20} className="text-white fill-white/20" />
-          </div>
-          <div className="bg-blue-600 text-white px-2 py-0.5 rounded-full text-[10px] font-black mt-1 shadow-md border border-white">
-            YOU
+          <BitmojiAvatar appearance={userAppearance!} size="large" />
+          <div className="bg-white/90 text-slate-800 px-2 py-0.5 rounded-full text-[10px] font-bold mt-1 shadow-sm border border-slate-200 whitespace-nowrap">
+            Me • now
           </div>
         </div>
       </motion.div>
@@ -238,41 +283,37 @@ const Avatar = ({ student, isMatched, onClick, isMissedClassMode, targetCourse, 
 
   const hasNotes = targetCourse && student!.notesAvailable.includes(targetCourse);
   const shouldGlow = isMissedClassMode ? hasNotes : isMatched;
-  const opacity = !shouldGlow && !isMissedClassMode ? "opacity-30" : "opacity-100";
-  const initials = student!.name.split(' ').map(n => n[0]).join('');
+  const opacity = !shouldGlow && !isMissedClassMode ? "opacity-40 grayscale" : "opacity-100";
   const personalityInitial = student!.personality[0].toUpperCase();
 
   return (
     <motion.div
-      className={`absolute cursor-pointer z-10 ${opacity} transition-opacity duration-500`}
+      className={`absolute cursor-pointer z-10 ${opacity} transition-all duration-500`}
       animate={{ left: `${pos.x}%`, top: `${pos.y}%` }}
       transition={{ duration: 3, ease: "linear" }}
       onClick={onClick}
+      style={{ transform: 'translate(-50%, -100%)' }}
     >
       <div className="relative flex flex-col items-center">
         {shouldGlow && (
           <>
-            <div className="absolute inset-0 -m-2 bg-yellow-400/50 rounded-full blur-md animate-pulse" />
+            {/* 3D Spotlight Cone */}
+            <div className="absolute bottom-4 w-16 h-24 bg-gradient-to-t from-blue-400/60 to-transparent blur-sm" style={{ clipPath: 'polygon(20% 0, 80% 0, 100% 100%, 0% 100%)', transform: 'perspective(10px) rotateX(2deg)' }} />
+            <div className="absolute bottom-4 w-12 h-4 bg-blue-500/40 rounded-full blur-sm" />
+            
             {/* Personality Badge */}
-            <div className="absolute -top-1 -right-1 w-4 h-4 bg-white rounded-full border border-slate-200 shadow-sm flex items-center justify-center z-20">
-              <span className="text-[8px] font-black text-slate-700">{personalityInitial}</span>
+            <div className="absolute top-0 -right-2 w-5 h-5 bg-white rounded-full border border-slate-200 shadow-sm flex items-center justify-center z-20">
+              <span className="text-[10px] font-black text-slate-700">{personalityInitial}</span>
             </div>
           </>
         )}
         
-        <div 
-          className={`w-8 h-8 rounded-full border-2 border-white shadow-lg flex items-center justify-center overflow-hidden transition-all ${shouldGlow ? 'scale-110' : 'scale-90'}`}
-          style={{ backgroundColor: student!.avatarColor }}
-        >
-          {shouldGlow ? (
-            <User size={16} className="text-white" />
-          ) : (
-            <span className="text-[10px] font-bold text-white/80">{initials}</span>
-          )}
+        <div className={`transition-transform ${shouldGlow ? 'scale-110' : 'scale-75'}`}>
+          <BitmojiAvatar appearance={student!.appearance} />
         </div>
         
         {shouldGlow && (
-          <div className="bg-white/90 px-1.5 py-0.5 rounded-full text-[8px] font-bold mt-1 shadow-sm border border-gray-200">
+          <div className="bg-white/90 px-2 py-0.5 rounded-full text-[9px] font-bold mt-1 shadow-sm border border-slate-200 whitespace-nowrap">
             {student!.name}
           </div>
         )}
@@ -289,7 +330,8 @@ export default function App() {
     notesAvailable: ["Computer Science I"],
     personality: "ambivert",
     learningStyle: "visual",
-    availability: "Mon-Fri Afternoons"
+    availability: "Mon-Fri Afternoons",
+    appearance: { skinTone: "#fadcbc", hairColor: "#4a4a4a", outfitColor: "#3b82f6" }
   });
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [selectedBuilding, setSelectedBuilding] = useState<typeof BUILDINGS[0] | null>(null);
@@ -413,31 +455,29 @@ export default function App() {
               className="absolute inset-0 bg-[#f8fafc]"
             >
               {/* Campus Map Background */}
-              <div className="absolute inset-0 p-4">
-                <div className="relative w-full h-full bg-[#ecfdf5] rounded-3xl border-4 border-white shadow-inner overflow-hidden">
-                  {/* Grid Lines */}
-                  <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "radial-gradient(#065f46 1px, transparent 1px)", backgroundSize: "20px 20px" }} />
+              <div className="absolute inset-0 p-0">
+                <div className="relative w-full h-full bg-[#f0ede5] overflow-hidden">
                   
                   {/* Student Plaza */}
-                  <div className="absolute left-[35%] top-[60%] w-[10%] h-[5%] bg-slate-200/50 rounded-full border border-slate-300 pointer-events-none flex items-center justify-center">
-                    <span className="text-[6px] font-bold text-slate-400">Plaza</span>
+                  <div className="absolute left-[35%] top-[60%] w-[10%] h-[5%] bg-[#e6e2d6] rounded-full pointer-events-none flex items-center justify-center">
+                    <span className="text-[6px] font-bold text-slate-500">Plaza</span>
                   </div>
 
                   {/* The Arboretum (Forest) */}
-                  <div className="absolute right-0 top-0 w-[20%] h-full bg-green-100/30 border-l border-green-200 pointer-events-none flex flex-col items-center justify-center gap-2">
-                    <Trees size={24} className="text-green-300" />
+                  <div className="absolute right-0 top-0 w-[25%] h-full bg-[#d4e6c3] pointer-events-none flex flex-col items-center justify-center gap-2">
+                    <Trees size={24} className="text-[#8cc63f]" />
                   </div>
 
                   {/* The Bay (Water) */}
-                  <div className="absolute left-0 top-0 w-[30%] h-[20%] bg-blue-100/50 rounded-br-[100px] border-b border-r border-blue-200 pointer-events-none flex items-center justify-center">
-                    <span className="text-[10px] font-bold text-blue-300 -rotate-12">The Bay</span>
+                  <div className="absolute left-0 top-0 w-[35%] h-[25%] bg-[#a2d5f2] rounded-br-[100px] pointer-events-none flex items-center justify-center">
+                    <span className="text-[10px] font-bold text-blue-500/50 -rotate-12">The Bay</span>
                   </div>
 
-                  {/* Concourses (Tunnels) */}
+                  {/* Concourses (Footpaths) */}
                   {CONCOURSES.map((c, i) => (
                     <div 
                       key={`c-${i}`}
-                      className="absolute bg-slate-200/80 border-x border-slate-300"
+                      className="absolute bg-[#e6e2d6]"
                       style={{ 
                         left: `${c.x}%`, 
                         top: `${c.y}%`, 
@@ -452,17 +492,17 @@ export default function App() {
                     <div 
                       key={i}
                       onClick={() => handleBuildingClick(b)}
-                      className={`absolute rounded-xl shadow-sm border flex items-center justify-center p-2 text-center cursor-pointer transition-all ${selectedBuilding?.name === b.name ? 'border-green-500 border-2 z-10 scale-105' : 'border-slate-300 hover:border-green-400'}`}
+                      className={`absolute flex items-center justify-center p-2 text-center cursor-pointer transition-all ${selectedBuilding?.name === b.name ? 'z-10 scale-105' : 'hover:scale-105'}`}
                       style={{ 
                         left: `${b.x}%`, 
                         top: `${b.y}%`, 
                         width: `${b.w}%`, 
                         height: `${b.h}%`,
-                        backgroundColor: b.color
                       }}
                     >
-                      <div className="bg-white/80 px-2 py-0.5 rounded-full shadow-sm border border-white/50">
-                        <span className="text-[8px] font-black text-slate-700 leading-tight whitespace-nowrap">{b.name.split(' (')[0]}</span>
+                      <div className="absolute inset-0 bg-white shadow-[0_4px_0_rgba(0,0,0,0.05)] border border-slate-100 rounded-sm" />
+                      <div className="relative z-10">
+                        <span className="text-[8px] font-bold text-slate-700 leading-tight whitespace-nowrap">{b.name.split(' (')[0]}</span>
                       </div>
                     </div>
                   ))}
@@ -471,11 +511,9 @@ export default function App() {
                   {DECORATIONS.map((d, i) => (
                     <div 
                       key={`d-${i}`}
-                      className="absolute text-green-800/20 pointer-events-none"
-                      style={{ left: `${d.x}%`, top: `${d.y}%` }}
-                    >
-                      <TreePine size={16} fill="currentColor" />
-                    </div>
+                      className="absolute w-4 h-4 bg-[#8cc63f] rounded-full shadow-sm pointer-events-none"
+                      style={{ left: `${d.x}%`, top: `${d.y}%`, transform: 'translate(-50%, -50%)' }}
+                    />
                   ))}
 
                   {/* Landmarks */}
@@ -485,21 +523,21 @@ export default function App() {
                       className="absolute flex flex-col items-center group cursor-help"
                       style={{ left: `${l.x}%`, top: `${l.y}%` }}
                     >
-                      <div className="bg-white/80 p-1 rounded-full shadow-sm border border-slate-200" style={{ color: l.color }}>
+                      <div className="bg-white/90 p-1 rounded-full shadow-sm border border-slate-100" style={{ color: l.color }}>
                         {l.icon === "zap" && <Zap size={12} fill="currentColor" />}
                         {l.icon === "tree" && <TreePine size={12} fill="currentColor" />}
                         {l.icon === "trees" && <Trees size={12} fill="currentColor" />}
                         {l.icon === "info" && <Info size={12} fill="currentColor" />}
                         {l.icon === "users" && <UsersIcon size={12} fill="currentColor" />}
                       </div>
-                      <div className="absolute bottom-full mb-1 bg-slate-800 text-white text-[8px] px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                      <div className="absolute bottom-full mb-1 bg-white text-slate-800 text-[8px] font-bold px-1.5 py-0.5 rounded shadow-sm opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
                         {l.name}
                       </div>
                     </div>
                   ))}
 
                   {/* Avatars */}
-                  <Avatar isUser />
+                  <Avatar isUser userAppearance={userProfile.appearance} />
                   {PRELOADED_STUDENTS.map(student => (
                     <Avatar 
                       key={student.id} 
@@ -545,11 +583,10 @@ export default function App() {
                     <button onClick={() => setActiveChatStudent(null)} className="p-2 -ml-2 text-slate-400">
                       <ChevronLeft size={24} />
                     </button>
-                    <div 
-                      className="w-10 h-10 rounded-xl flex items-center justify-center shadow-inner"
-                      style={{ backgroundColor: activeChatStudent.avatarColor }}
-                    >
-                      <User size={20} className="text-white" />
+                    <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center overflow-hidden shadow-inner">
+                      <div className="scale-110 translate-y-2">
+                        <BitmojiAvatar appearance={activeChatStudent.appearance} />
+                      </div>
                     </div>
                     <div>
                       <h3 className="font-bold">{activeChatStudent.name}</h3>
@@ -610,11 +647,10 @@ export default function App() {
                             onClick={() => setActiveChatStudent(student)}
                             className="w-full flex items-center gap-4 p-4 bg-slate-50 border border-slate-200 rounded-2xl hover:border-green-300 transition-colors text-left"
                           >
-                            <div 
-                              className="w-12 h-12 rounded-xl flex items-center justify-center shadow-inner shrink-0"
-                              style={{ backgroundColor: student.avatarColor }}
-                            >
-                              <User size={24} className="text-white" />
+                            <div className="w-12 h-12 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center overflow-hidden shadow-inner shrink-0">
+                              <div className="scale-125 translate-y-3">
+                                <BitmojiAvatar appearance={student.appearance} />
+                              </div>
                             </div>
                             <div className="flex-1 min-w-0">
                               <div className="flex justify-between items-baseline">
@@ -663,7 +699,67 @@ export default function App() {
             >
               <h2 className="text-2xl font-bold mb-6">Your Profile</h2>
               
-              <div className="space-y-6">
+              <div className="space-y-6 pb-20">
+                {/* Avatar Customization */}
+                <section className="bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                  <h3 className="font-bold text-slate-700 mb-4 flex items-center gap-2">
+                    <User size={18} /> Avatar Appearance
+                  </h3>
+                  
+                  <div className="flex flex-col items-center mb-6">
+                    <div className="w-24 h-24 bg-white rounded-full border-4 border-slate-100 shadow-sm flex items-center justify-center overflow-hidden mb-2">
+                      <div className="scale-150 translate-y-4">
+                        <BitmojiAvatar appearance={userProfile.appearance} />
+                      </div>
+                    </div>
+                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Live Preview</span>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Skin Tone</label>
+                      <div className="flex gap-2">
+                        {["#fadcbc", "#f0b896", "#e09565", "#c68642", "#8d5524", "#3d2c23"].map(color => (
+                          <button
+                            key={color}
+                            onClick={() => setUserProfile({...userProfile, appearance: {...userProfile.appearance, skinTone: color}})}
+                            className={`w-8 h-8 rounded-full border-2 transition-transform ${userProfile.appearance.skinTone === color ? 'border-green-500 scale-110' : 'border-transparent hover:scale-105'}`}
+                            style={{ backgroundColor: color }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Hair Color</label>
+                      <div className="flex flex-wrap gap-2">
+                        {["#e6ce94", "#b55239", "#7a3b22", "#4a4a4a", "#000000", "#ef4444", "#22c55e", "#3b82f6"].map(color => (
+                          <button
+                            key={color}
+                            onClick={() => setUserProfile({...userProfile, appearance: {...userProfile.appearance, hairColor: color}})}
+                            className={`w-8 h-8 rounded-full border-2 transition-transform ${userProfile.appearance.hairColor === color ? 'border-green-500 scale-110' : 'border-transparent hover:scale-105'}`}
+                            style={{ backgroundColor: color }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Outfit Color</label>
+                      <div className="flex gap-2">
+                        {["#3b82f6", "#ef4444", "#22c55e", "#eab308", "#a855f7", "#14b8a6"].map(color => (
+                          <button
+                            key={color}
+                            onClick={() => setUserProfile({...userProfile, appearance: {...userProfile.appearance, outfitColor: color}})}
+                            className={`w-8 h-8 rounded-full border-2 transition-transform ${userProfile.appearance.outfitColor === color ? 'border-green-500 scale-110' : 'border-transparent hover:scale-105'}`}
+                            style={{ backgroundColor: color }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </section>
+
                 <section>
                   <label className="block text-sm font-medium text-slate-500 mb-1">Full Name</label>
                   <input 
@@ -800,11 +896,10 @@ export default function App() {
             >
               <div className="flex justify-between items-start mb-6">
                 <div className="flex items-center gap-4">
-                  <div 
-                    className="w-16 h-16 rounded-full flex items-center justify-center shadow-inner text-white text-2xl font-black"
-                    style={{ backgroundColor: selectedStudent.avatarColor }}
-                  >
-                    {selectedStudent.name[0]}
+                  <div className="w-16 h-16 rounded-full bg-slate-100 border-2 border-slate-200 flex items-center justify-center overflow-hidden shadow-inner">
+                    <div className="scale-150 translate-y-4">
+                      <BitmojiAvatar appearance={selectedStudent.appearance} />
+                    </div>
                   </div>
                   <div>
                     <h3 className="text-2xl font-bold">{selectedStudent.name}</h3>
