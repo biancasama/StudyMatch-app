@@ -288,10 +288,13 @@ interface AvatarProps {
   targetCourse?: string | null;
   isUser?: boolean;
   userAppearance?: AvatarAppearance;
+  matchScore?: number;
+  isConnected?: boolean;
+  userBio?: string;
   key?: string | number;
 }
 
-const Avatar = ({ student, isMatched, onClick, isMissedClassMode, targetCourse, isUser, userAppearance }: AvatarProps) => {
+const Avatar = ({ student, isMatched, onClick, isMissedClassMode, targetCourse, isUser, userAppearance, matchScore, isConnected, userBio }: AvatarProps) => {
   const [pos, setPos] = useState(isUser ? { x: 50, y: 50 } : { x: student!.initialX, y: student!.initialY });
   
   useEffect(() => {
@@ -308,7 +311,7 @@ const Avatar = ({ student, isMatched, onClick, isMissedClassMode, targetCourse, 
   if (isUser) {
     return (
       <motion.div
-        className="absolute z-30 animate-bob"
+        className="absolute z-30 animate-bob group"
         style={{ left: `50%`, top: `50%`, transform: 'translate(-50%, -100%)' }}
       >
         <div className="relative flex flex-col items-center">
@@ -316,6 +319,11 @@ const Avatar = ({ student, isMatched, onClick, isMissedClassMode, targetCourse, 
           <div className="bg-white/90 text-slate-800 px-2 py-0.5 rounded-full text-[10px] font-bold mt-1 shadow-sm border border-slate-200 whitespace-nowrap">
             Me • now
           </div>
+          {userBio && (
+            <div className="absolute top-full mt-1 bg-white text-slate-800 text-[9px] px-2 py-1 rounded shadow-sm whitespace-nowrap border border-slate-200 z-40 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+              {userBio}
+            </div>
+          )}
         </div>
       </motion.div>
     );
@@ -345,7 +353,21 @@ const Avatar = ({ student, isMatched, onClick, isMissedClassMode, targetCourse, 
             <div className="absolute top-0 -right-2 w-5 h-5 bg-white rounded-full border border-slate-200 shadow-sm flex items-center justify-center z-20">
               <span className="text-[10px] font-black text-slate-700">{personalityInitial}</span>
             </div>
+            
+            {/* Match Score Badge */}
+            {matchScore && !isMissedClassMode && (
+              <div className="absolute -top-3 -right-6 bg-[var(--color-uwgb-accent)] text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow-sm border border-white z-30 whitespace-nowrap">
+                {matchScore}% Match
+              </div>
+            )}
           </>
+        )}
+        
+        {/* Connected Badge */}
+        {isConnected && (
+          <div className="absolute -bottom-1 -right-1 bg-blue-500 text-white p-0.5 rounded-full shadow-sm border border-white z-30">
+            <CheckCircle2 size={10} />
+          </div>
         )}
         
         <div className={`transition-transform ${shouldGlow ? 'scale-110' : 'scale-75'}`}>
@@ -364,15 +386,38 @@ const Avatar = ({ student, isMatched, onClick, isMissedClassMode, targetCourse, 
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<"map" | "profile" | "missed" | "messages">("map");
-  const [userProfile, setUserProfile] = useState<UserProfile>({
-    name: "Phoenix",
-    courses: ["Intro to Psychology", "Computer Science I"],
-    notesAvailable: ["Computer Science I"],
-    personality: "ambivert",
-    learningStyle: "visual",
-    availability: "Mon-Fri Afternoons",
-    appearance: { skinTone: "#fadcbc", hairColor: "#4a4a4a", outfitColor: "#3b82f6" }
+  const [userProfile, setUserProfile] = useState<UserProfile>(() => {
+    const saved = localStorage.getItem('studyMatch_userProfile');
+    return saved ? JSON.parse(saved) : {
+      name: "Phoenix",
+      courses: ["Intro to Psychology", "Computer Science I"],
+      notesAvailable: ["Computer Science I"],
+      personality: "ambivert",
+      learningStyle: "visual",
+      availability: "Mon-Fri Afternoons",
+      appearance: { skinTone: "#fadcbc", hairColor: "#4a4a4a", outfitColor: "#3b82f6" }
+    };
   });
+  const [connectedStudents, setConnectedStudents] = useState<string[]>(() => {
+    const saved = localStorage.getItem('studyMatch_connectedStudents');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [matchScores, setMatchScores] = useState<Record<string, number>>(() => {
+    const saved = localStorage.getItem('studyMatch_matchScores');
+    return saved ? JSON.parse(saved) : {};
+  });
+
+  useEffect(() => {
+    localStorage.setItem('studyMatch_userProfile', JSON.stringify(userProfile));
+  }, [userProfile]);
+
+  useEffect(() => {
+    localStorage.setItem('studyMatch_connectedStudents', JSON.stringify(connectedStudents));
+  }, [connectedStudents]);
+
+  useEffect(() => {
+    localStorage.setItem('studyMatch_matchScores', JSON.stringify(matchScores));
+  }, [matchScores]);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [selectedBuilding, setSelectedBuilding] = useState<typeof BUILDINGS[0] | null>(null);
   const [matchExplanation, setMatchExplanation] = useState<{headline: string, bullets: string[], vibeTag: string, paragraph: string} | null>(null);
@@ -385,6 +430,55 @@ export default function App() {
   const [activeChatStudent, setActiveChatStudent] = useState<Student | null>(null);
   const [newMessage, setNewMessage] = useState("");
   const chatEndRef = useRef<HTMLDivElement>(null);
+
+  const [draftedNoteRequest, setDraftedNoteRequest] = useState<string | null>(null);
+  const [isDraftingNotes, setIsDraftingNotes] = useState(false);
+  const [isGeneratingBio, setIsGeneratingBio] = useState(false);
+
+  const draftNotesRequest = async () => {
+    if (!selectedStudent || !missedCourse) return;
+    setIsDraftingNotes(true);
+    try {
+      const prompt = `
+        Write a friendly, casual Gen Z style message (max 3 lines) from ${userProfile.name} to ${selectedStudent.name}.
+        ${userProfile.name} missed the "${missedCourse}" class and is asking if they can share their notes.
+        Keep it short, polite, and use a couple of emojis.
+      `;
+      const response = await ai.models.generateContent({
+        model: "gemini-3-flash-preview",
+        contents: prompt,
+      });
+      setDraftedNoteRequest(response.text?.trim() || "Hey! I missed class today, any chance you could share your notes? 🙏");
+    } catch (error) {
+      console.error("Drafting error:", error);
+      setDraftedNoteRequest("Hey! I missed class today, any chance you could share your notes? 🙏");
+    } finally {
+      setIsDraftingNotes(false);
+    }
+  };
+
+  const handleSaveProfile = async () => {
+    setActiveTab("map");
+    setIsGeneratingBio(true);
+    try {
+      const prompt = `
+        Generate a fun, short bio line (max 10 words) for a college student named ${userProfile.name}.
+        Personality: ${userProfile.personality}
+        Learning Style: ${userProfile.learningStyle}
+        Appearance: wears ${userProfile.appearance.outfitColor} outfit.
+        Make it Gen Z style with one emoji. Example: "Visual learner, low-key, always has snacks 🍪"
+      `;
+      const response = await ai.models.generateContent({
+        model: "gemini-3-flash-preview",
+        contents: prompt,
+      });
+      setUserProfile(prev => ({ ...prev, bio: response.text?.trim() || "Ready to study! 📚" }));
+    } catch (error) {
+      console.error("Bio generation error:", error);
+    } finally {
+      setIsGeneratingBio(false);
+    }
+  };
 
   useEffect(() => {
     if (chatEndRef.current) {
@@ -429,17 +523,36 @@ export default function App() {
       
       const result = JSON.parse(response.text || "{}");
       setMatchExplanation(result);
+      setMatchScores(prev => ({ ...prev, [student.id]: result.matchScore }));
+      if (result.suggestedMeetingSpot) {
+        const spot = BUILDINGS.find(b => b.name.includes(result.suggestedMeetingSpot)) || BUILDINGS[0];
+        setMeetingSpot(spot);
+      }
     } catch (error) {
       console.error("Gemini Error:", error);
-      setMatchExplanation({
+      const fallback = {
+        matchScore: 85,
         headline: "Great Match! 🌟",
         bullets: ["📚 Shared interests", "🧠 Complementary styles", "🕐 Potential study buddies"],
         vibeTag: "Study Duo 🤝",
-        paragraph: "Looks like a great match based on your shared interests!"
-      });
+        paragraph: "Looks like a great match based on your shared interests!",
+        suggestedMeetingSpot: "Library"
+      };
+      setMatchExplanation(fallback);
+      setMatchScores(prev => ({ ...prev, [student.id]: fallback.matchScore }));
     } finally {
       setIsLoadingMatch(false);
     }
+  };
+
+  const getHeuristicScore = (student: Student) => {
+    let score = 60;
+    const sharedCourses = student.courses.filter(c => userProfile.courses.includes(c)).length;
+    score += sharedCourses * 15;
+    if (student.personality === userProfile.personality) score += 5;
+    if (student.learningStyle === userProfile.learningStyle) score += 5;
+    score += (student.id.charCodeAt(0) % 10);
+    return Math.min(99, score);
   };
 
   const isMatched = (student: Student) => {
@@ -453,8 +566,9 @@ export default function App() {
   const handleStudentClick = (student: Student) => {
     setSelectedBuilding(null);
     setSelectedStudent(student);
+    setDraftedNoteRequest(null);
     getMatchExplanation(student);
-    // Pick a random building for the meeting spot
+    // Pick a random building for the meeting spot as fallback
     const randomBuilding = BUILDINGS[Math.floor(Math.random() * BUILDINGS.length)];
     setMeetingSpot(randomBuilding);
   };
@@ -610,7 +724,7 @@ export default function App() {
                   ))}
 
                   {/* Avatars */}
-                  <Avatar isUser userAppearance={userProfile.appearance} />
+                  <Avatar isUser userAppearance={userProfile.appearance} userBio={userProfile.bio} />
                   {PRELOADED_STUDENTS.map(student => (
                     <Avatar 
                       key={student.id} 
@@ -619,6 +733,8 @@ export default function App() {
                       isMissedClassMode={!!missedCourse}
                       targetCourse={missedCourse}
                       onClick={() => handleStudentClick(student)}
+                      matchScore={matchScores[student.id] || getHeuristicScore(student)}
+                      isConnected={connectedStudents.includes(student.id)}
                     />
                   ))}
 
@@ -910,9 +1026,11 @@ export default function App() {
 
                 <div className="pt-4">
                   <button 
-                    onClick={() => setActiveTab("map")}
-                    className="w-full btn-primary py-4"
+                    onClick={handleSaveProfile}
+                    disabled={isGeneratingBio}
+                    className="w-full btn-primary py-4 flex items-center justify-center gap-2"
                   >
+                    {isGeneratingBio ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : null}
                     Save & View Map
                   </button>
                 </div>
@@ -1075,13 +1193,48 @@ export default function App() {
                     Message
                   </button>
                   <button 
-                    onClick={() => setSelectedStudent(null)}
-                    className="bg-slate-100 text-slate-600 py-4 rounded-full font-bold active:scale-95 transition-transform flex flex-col items-center justify-center gap-0.5"
+                    onClick={() => {
+                      const isConnected = connectedStudents.includes(selectedStudent.id);
+                      if (isConnected) {
+                        setConnectedStudents(prev => prev.filter(id => id !== selectedStudent.id));
+                      } else {
+                        setConnectedStudents(prev => [...prev, selectedStudent.id]);
+                      }
+                    }}
+                    className={`py-4 rounded-full font-bold active:scale-95 transition-transform flex flex-col items-center justify-center gap-0.5 ${connectedStudents.includes(selectedStudent.id) ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-600'}`}
                   >
                     <CheckCircle2 size={20} />
-                    <span className="text-[10px] uppercase tracking-tighter">Connect Later</span>
+                    <span className="text-[10px] uppercase tracking-tighter">{connectedStudents.includes(selectedStudent.id) ? "Connected" : "Connect"}</span>
                   </button>
                 </div>
+
+                {missedCourse && selectedStudent.notesAvailable.includes(missedCourse) && (
+                  <div className="bg-amber-50 p-4 rounded-2xl border border-amber-100 mt-4">
+                    <h4 className="text-xs font-bold text-amber-800 uppercase tracking-wider mb-2">Need Notes?</h4>
+                    {!draftedNoteRequest ? (
+                      <button 
+                        onClick={draftNotesRequest}
+                        disabled={isDraftingNotes}
+                        className="w-full bg-amber-200 text-amber-900 py-3 rounded-xl font-bold text-sm hover:bg-amber-300 transition-colors flex items-center justify-center gap-2"
+                      >
+                        {isDraftingNotes ? <div className="w-4 h-4 border-2 border-amber-900 border-t-transparent rounded-full animate-spin" /> : <MessageCircle size={16} />}
+                        Draft Request Message
+                      </button>
+                    ) : (
+                      <div className="space-y-2">
+                        <div className="bg-white p-3 rounded-xl border border-amber-200 text-sm text-slate-700 whitespace-pre-wrap">
+                          {draftedNoteRequest}
+                        </div>
+                        <button 
+                          onClick={() => navigator.clipboard.writeText(draftedNoteRequest)}
+                          className="w-full bg-amber-200 text-amber-900 py-2 rounded-xl font-bold text-sm hover:bg-amber-300 transition-colors flex items-center justify-center gap-2"
+                        >
+                          Copy Message
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </motion.div>
           )}
