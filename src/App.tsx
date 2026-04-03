@@ -308,7 +308,7 @@ const Avatar = ({ student, isMatched, onClick, isMissedClassMode, targetCourse, 
   if (isUser) {
     return (
       <motion.div
-        className="absolute z-30"
+        className="absolute z-30 animate-flutter-fast"
         style={{ left: `50%`, top: `50%`, transform: 'translate(-50%, -100%)' }}
       >
         <div className="relative flex flex-col items-center">
@@ -328,7 +328,7 @@ const Avatar = ({ student, isMatched, onClick, isMissedClassMode, targetCourse, 
 
   return (
     <motion.div
-      className={`absolute cursor-pointer z-10 ${opacity} transition-all duration-500`}
+      className={`absolute cursor-pointer z-10 ${opacity} transition-all duration-500 ${shouldGlow ? 'animate-flutter-fast' : 'animate-flutter'}`}
       animate={{ left: `${pos.x}%`, top: `${pos.y}%` }}
       transition={{ duration: 3, ease: "linear" }}
       onClick={onClick}
@@ -464,14 +464,14 @@ export default function App() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-slate-50 font-sans text-slate-900 max-w-[430px] mx-auto border-x border-slate-200 overflow-hidden relative">
+    <div className="flex flex-col h-screen bg-[var(--color-uwgb-bg)] font-sans text-[var(--color-uwgb-text)] max-w-[430px] mx-auto border-x border-slate-200 overflow-hidden relative">
       {/* Header */}
-      <header className="bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between z-20">
+      <header className="bg-[var(--color-uwgb-primary)] border-b border-slate-200 px-4 py-3 flex items-center justify-between z-20">
         <div className="flex items-center gap-2">
-          <div className="bg-green-600 p-1.5 rounded-lg">
+          <div className="bg-[var(--color-uwgb-accent)] p-1.5 rounded-lg">
             <GraduationCap size={20} className="text-white" />
           </div>
-          <h1 className="font-bold text-lg tracking-tight text-green-800">StudyMatch <span className="text-slate-400 font-normal">UWGB</span></h1>
+          <h1 className="font-heading font-bold text-xl tracking-tight text-white">StudyMatch <span className="text-white/70 font-normal">UWGB</span></h1>
         </div>
         {activeTab === "map" && missedCourse && (
           <button 
@@ -492,11 +492,19 @@ export default function App() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-[#f8fafc]"
+              className="absolute inset-0 bg-[var(--color-uwgb-bg)]"
             >
               {/* Campus Map Background */}
               <div className="absolute inset-0 p-0">
                 <div className="relative w-full h-full bg-[#f0ede5] overflow-hidden">
+                  <div className="absolute inset-0 wavy-bg opacity-20 pointer-events-none" />
+                  
+                  {/* Phoenix Logo Watermark */}
+                  <div className="absolute top-4 left-4 opacity-10 pointer-events-none z-10">
+                    <svg width="60" height="60" viewBox="0 0 24 24" fill="var(--color-uwgb-primary)" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12 2L2 22h20L12 2zm0 4.5l6.5 13h-13L12 6.5z"/>
+                    </svg>
+                  </div>
                   
                   {/* Student Plaza */}
                   <div className="absolute left-[35%] top-[60%] w-[10%] h-[5%] bg-[#e6e2d6] rounded-full pointer-events-none flex items-center justify-center">
@@ -630,7 +638,7 @@ export default function App() {
                     </div>
                     <div>
                       <h3 className="font-bold">{activeChatStudent.name}</h3>
-                      <p className="text-[10px] text-green-600 font-bold uppercase tracking-wider">Study Partner</p>
+                      <p className="text-[10px] text-[var(--color-uwgb-accent)] font-bold uppercase tracking-wider">Study Partner</p>
                     </div>
                   </div>
 
@@ -641,7 +649,7 @@ export default function App() {
                     </div>
                     {(chats[activeChatStudent.id] || []).map((msg, i) => (
                       <div key={i} className={`flex ${msg.sender === userProfile.name ? 'justify-end' : 'justify-start'}`}>
-                        <div className={`max-w-[80%] p-3 rounded-2xl text-sm ${msg.sender === userProfile.name ? 'bg-green-600 text-white rounded-tr-none' : 'bg-white border border-slate-200 text-slate-700 rounded-tl-none'}`}>
+                        <div className={`max-w-[80%] p-3 rounded-2xl text-sm ${msg.sender === userProfile.name ? 'bg-[var(--color-uwgb-accent)] text-white rounded-tr-none' : 'bg-white border border-slate-200 text-slate-700 rounded-tl-none'}`}>
                           {msg.text}
                           <div className={`text-[8px] mt-1 opacity-50 ${msg.sender === userProfile.name ? 'text-white' : 'text-slate-400'}`}>
                             {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -661,11 +669,11 @@ export default function App() {
                         onChange={e => setNewMessage(e.target.value)}
                         onKeyPress={e => e.key === 'Enter' && sendMessage(activeChatStudent.id)}
                         placeholder="Type a message..."
-                        className="flex-1 p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-green-500 transition-colors"
+                        className="flex-1 p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[var(--color-uwgb-accent)] transition-colors"
                       />
                       <button 
                         onClick={() => sendMessage(activeChatStudent.id)}
-                        className="w-12 h-12 bg-green-600 text-white rounded-xl flex items-center justify-center shadow-lg shadow-green-100 active:scale-95 transition-transform"
+                        className="w-12 h-12 btn-primary flex items-center justify-center"
                       >
                         <Zap size={20} fill="currentColor" />
                       </button>
@@ -685,7 +693,7 @@ export default function App() {
                           <button 
                             key={studentId}
                             onClick={() => setActiveChatStudent(student)}
-                            className="w-full flex items-center gap-4 p-4 bg-slate-50 border border-slate-200 rounded-2xl hover:border-green-300 transition-colors text-left"
+                            className="w-full flex items-center gap-4 p-4 bg-white border border-slate-200 rounded-2xl transition-colors text-left card-depth"
                           >
                             <div className="w-12 h-12 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center overflow-hidden shadow-inner shrink-0">
                               <div className="scale-125 translate-y-1">
@@ -717,7 +725,7 @@ export default function App() {
                         </div>
                         <button 
                           onClick={() => setActiveTab("map")}
-                          className="text-green-600 font-bold text-sm"
+                          className="btn-primary px-6 py-2 text-sm"
                         >
                           Go to Map
                         </button>
@@ -735,13 +743,16 @@ export default function App() {
               initial={{ x: 300, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: 300, opacity: 0 }}
-              className="absolute inset-0 bg-white p-6 overflow-y-auto"
+              className="absolute inset-0 bg-[var(--color-uwgb-bg)] p-6 overflow-y-auto"
             >
-              <h2 className="text-2xl font-bold mb-6">Your Profile</h2>
+              <div className="mb-6">
+                <h2 className="text-2xl font-heading font-bold">Your Profile</h2>
+                <p className="text-[var(--color-uwgb-muted)] text-sm font-medium">Find Your Flock 🐦</p>
+              </div>
               
               <div className="space-y-6 pb-20">
                 {/* Avatar Customization */}
-                <section className="bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                <section className="bg-white p-4 rounded-2xl border border-slate-200 card-depth">
                   <h3 className="font-bold text-slate-700 mb-4 flex items-center gap-2">
                     <User size={18} /> Avatar Appearance
                   </h3>
@@ -763,7 +774,7 @@ export default function App() {
                           <button
                             key={color}
                             onClick={() => setUserProfile({...userProfile, appearance: {...userProfile.appearance, skinTone: color}})}
-                            className={`w-8 h-8 rounded-full border-2 transition-transform ${userProfile.appearance.skinTone === color ? 'border-green-500 scale-110' : 'border-transparent hover:scale-105'}`}
+                            className={`w-8 h-8 rounded-full border-2 transition-transform ${userProfile.appearance.skinTone === color ? 'border-[var(--color-uwgb-accent)] scale-110' : 'border-transparent hover:scale-105'}`}
                             style={{ backgroundColor: color }}
                           />
                         ))}
@@ -791,7 +802,7 @@ export default function App() {
                           <button
                             key={color}
                             onClick={() => setUserProfile({...userProfile, appearance: {...userProfile.appearance, outfitColor: color}})}
-                            className={`w-8 h-8 rounded-full border-2 transition-transform ${userProfile.appearance.outfitColor === color ? 'border-green-500 scale-110' : 'border-transparent hover:scale-105'}`}
+                            className={`w-8 h-8 rounded-full border-2 transition-transform ${userProfile.appearance.outfitColor === color ? 'border-[var(--color-uwgb-accent)] scale-110' : 'border-transparent hover:scale-105'}`}
                             style={{ backgroundColor: color }}
                           />
                         ))}
@@ -800,17 +811,17 @@ export default function App() {
                   </div>
                 </section>
 
-                <section>
+                <section className="bg-white p-4 rounded-2xl border border-slate-200 card-depth">
                   <label className="block text-sm font-medium text-slate-500 mb-1">Full Name</label>
                   <input 
                     type="text" 
                     value={userProfile.name}
                     onChange={e => setUserProfile({...userProfile, name: e.target.value})}
-                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none"
+                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[var(--color-uwgb-accent)] outline-none"
                   />
                 </section>
 
-                <section>
+                <section className="bg-white p-4 rounded-2xl border border-slate-200 card-depth">
                   <label className="block text-sm font-medium text-slate-500 mb-2">My Courses</label>
                   <div className="flex flex-wrap gap-2">
                     {UWGB_COURSES.map(course => (
@@ -824,7 +835,7 @@ export default function App() {
                         }}
                         className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
                           userProfile.courses.includes(course)
-                            ? "bg-green-600 text-white"
+                            ? "bg-[var(--color-uwgb-teal)] text-white"
                             : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                         }`}
                       >
@@ -834,13 +845,13 @@ export default function App() {
                   </div>
                 </section>
 
-                <section className="grid grid-cols-2 gap-4">
+                <section className="grid grid-cols-2 gap-4 bg-white p-4 rounded-2xl border border-slate-200 card-depth">
                   <div>
                     <label className="block text-sm font-medium text-slate-500 mb-1">Personality</label>
                     <select 
                       value={userProfile.personality}
                       onChange={e => setUserProfile({...userProfile, personality: e.target.value as Personality})}
-                      className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none"
+                      className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-[var(--color-uwgb-accent)]"
                     >
                       <option value="introvert">Introvert</option>
                       <option value="ambivert">Ambivert</option>
@@ -852,7 +863,7 @@ export default function App() {
                     <select 
                       value={userProfile.learningStyle}
                       onChange={e => setUserProfile({...userProfile, learningStyle: e.target.value as LearningStyle})}
-                      className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none"
+                      className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-[var(--color-uwgb-accent)]"
                     >
                       <option value="visual">Visual</option>
                       <option value="auditory">Auditory</option>
@@ -862,20 +873,20 @@ export default function App() {
                   </div>
                 </section>
 
-                <section>
+                <section className="bg-white p-4 rounded-2xl border border-slate-200 card-depth">
                   <label className="block text-sm font-medium text-slate-500 mb-1">Availability</label>
                   <input 
                     type="text" 
                     value={userProfile.availability}
                     onChange={e => setUserProfile({...userProfile, availability: e.target.value})}
-                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none"
+                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-[var(--color-uwgb-accent)]"
                   />
                 </section>
 
                 <div className="pt-4">
                   <button 
                     onClick={() => setActiveTab("map")}
-                    className="w-full bg-green-600 text-white py-4 rounded-2xl font-bold shadow-lg shadow-green-200 active:scale-95 transition-transform"
+                    className="w-full btn-primary py-4"
                   >
                     Save & View Map
                   </button>
@@ -912,7 +923,7 @@ export default function App() {
                         setMissedCourse(course);
                         setActiveTab("map");
                       }}
-                      className="w-full flex items-center justify-between p-4 bg-slate-50 border border-slate-200 rounded-2xl hover:border-red-300 transition-colors group"
+                      className="w-full flex items-center justify-between p-4 bg-white border border-slate-200 rounded-2xl transition-colors group card-depth"
                     >
                       <span className="font-medium">{course}</span>
                       <Search size={18} className="text-slate-400 group-hover:text-red-500" />
@@ -936,16 +947,16 @@ export default function App() {
             >
               <div className="flex justify-between items-start mb-6">
                 <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 rounded-full bg-slate-100 border-2 border-slate-200 flex items-center justify-center overflow-hidden shadow-inner">
+                  <div className="w-16 h-16 rounded-full bg-slate-100 border-2 border-slate-200 flex items-center justify-center overflow-hidden shadow-inner animate-flutter">
                     <div className="scale-150 translate-y-1">
                       <BitmojiAvatar appearance={selectedStudent.appearance} />
                     </div>
                   </div>
                   <div>
-                    <h3 className="text-2xl font-bold">{selectedStudent.name}</h3>
-                    <div className="flex items-center gap-1 text-green-600 text-sm font-bold">
+                    <h3 className="text-2xl font-bold border-b-4 border-[var(--color-uwgb-accent)] inline-block pb-1">{selectedStudent.name}</h3>
+                    <div className="flex items-center gap-1 text-[var(--color-uwgb-accent)] text-sm font-bold mt-1">
                       <Zap size={14} fill="currentColor" />
-                      {isMatched(selectedStudent) ? "Great Match!" : "Potential Partner"}
+                      {isMatched(selectedStudent) ? "Great Match! 🐦" : "Potential Partner"}
                     </div>
                   </div>
                 </div>
@@ -958,22 +969,22 @@ export default function App() {
               </div>
 
               <div className="space-y-4">
-                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                  <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Why you match</h4>
+                <div className="bg-white p-4 rounded-2xl border border-slate-100 wavy-border-top shadow-sm">
+                  <h4 className="text-xs font-bold text-[var(--color-uwgb-muted)] uppercase tracking-wider mb-2">Why you match</h4>
                   {isLoadingMatch ? (
-                    <div className="flex items-center gap-2 text-sm text-slate-500 italic">
-                      <div className="w-4 h-4 border-2 border-green-500 border-t-transparent rounded-full animate-spin" />
+                    <div className="flex items-center gap-2 text-sm text-[var(--color-uwgb-muted)] italic">
+                      <div className="w-4 h-4 border-2 border-[var(--color-uwgb-accent)] border-t-transparent rounded-full animate-spin" />
                       Asking Gemini...
                     </div>
                   ) : (
                     <div>
-                      <p className={`text-sm text-slate-700 leading-relaxed ${!showFullExplanation ? 'line-clamp-3' : ''}`}>
+                      <p className={`text-sm text-[var(--color-uwgb-text)] leading-relaxed ${!showFullExplanation ? 'line-clamp-3' : ''}`}>
                         {matchExplanation}
                       </p>
                       {matchExplanation && matchExplanation.length > 150 && (
                         <button 
                           onClick={() => setShowFullExplanation(!showFullExplanation)}
-                          className="text-green-600 text-xs font-bold mt-2"
+                          className="text-[var(--color-uwgb-accent)] text-xs font-bold mt-2"
                         >
                           {showFullExplanation ? "Show less" : "Read more"}
                         </button>
@@ -983,12 +994,12 @@ export default function App() {
                 </div>
 
                 <div className="space-y-2">
-                  <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Courses</h4>
+                  <h4 className="text-xs font-bold text-[var(--color-uwgb-muted)] uppercase tracking-wider">Courses</h4>
                   <div className="flex flex-wrap gap-2">
                     {selectedStudent.courses.map(course => (
                       <span 
                         key={course} 
-                        className={`px-3 py-1 rounded-full text-[10px] font-bold border ${COURSE_COLORS[course] || 'bg-slate-100 text-slate-600 border-slate-200'}`}
+                        className="px-3 py-1 rounded-full text-[10px] font-bold bg-[var(--color-uwgb-teal)] text-white"
                       >
                         {course}
                       </span>
@@ -1018,14 +1029,14 @@ export default function App() {
                 <div className="grid grid-cols-2 gap-3 pt-2">
                   <button 
                     onClick={() => openChat(selectedStudent)}
-                    className="bg-green-600 text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-green-100 active:scale-95 transition-transform"
+                    className="btn-primary py-4 flex items-center justify-center gap-2"
                   >
                     <MessageCircle size={20} />
                     Message
                   </button>
                   <button 
                     onClick={() => setSelectedStudent(null)}
-                    className="bg-slate-100 text-slate-600 py-4 rounded-2xl font-bold active:scale-95 transition-transform flex flex-col items-center justify-center gap-0.5"
+                    className="bg-slate-100 text-slate-600 py-4 rounded-full font-bold active:scale-95 transition-transform flex flex-col items-center justify-center gap-0.5"
                   >
                     <CheckCircle2 size={20} />
                     <span className="text-[10px] uppercase tracking-tighter">Connect Later</span>
@@ -1080,36 +1091,36 @@ export default function App() {
       </main>
 
       {/* Bottom Navigation */}
-      <nav className="bg-white border-t border-slate-200 px-6 py-3 flex justify-between items-center z-20">
+      <nav className="bg-[var(--color-uwgb-primary)] px-6 py-3 flex justify-between items-center z-20">
         <button 
           onClick={() => setActiveTab("map")}
-          className={`flex flex-col items-center gap-1 transition-colors ${activeTab === "map" ? "text-green-600" : "text-slate-400"}`}
+          className={`flex flex-col items-center gap-1 transition-colors ${activeTab === "map" ? "text-[var(--color-uwgb-accent)]" : "text-white/60"}`}
         >
           <MapIcon size={24} />
           <span className="text-[10px] font-bold">Campus</span>
         </button>
         <button 
           onClick={() => setActiveTab("missed")}
-          className={`flex flex-col items-center gap-1 transition-colors ${activeTab === "missed" ? "text-red-600" : "text-slate-400"}`}
+          className={`flex flex-col items-center gap-1 transition-colors ${activeTab === "missed" ? "text-[var(--color-uwgb-accent)]" : "text-white/60"}`}
         >
           <AlertCircle size={24} />
           <span className="text-[10px] font-bold">Missed</span>
         </button>
         <button 
           onClick={() => setActiveTab("messages")}
-          className={`flex flex-col items-center gap-1 transition-colors ${activeTab === "messages" ? "text-green-600" : "text-slate-400"}`}
+          className={`flex flex-col items-center gap-1 transition-colors ${activeTab === "messages" ? "text-[var(--color-uwgb-accent)]" : "text-white/60"}`}
         >
           <div className="relative">
             <MessageCircle size={24} />
             {Object.keys(chats).length > 0 && (
-              <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white" />
+              <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-[var(--color-uwgb-primary)]" />
             )}
           </div>
           <span className="text-[10px] font-bold">Messages</span>
         </button>
         <button 
           onClick={() => setActiveTab("profile")}
-          className={`flex flex-col items-center gap-1 transition-colors ${activeTab === "profile" ? "text-green-600" : "text-slate-400"}`}
+          className={`flex flex-col items-center gap-1 transition-colors ${activeTab === "profile" ? "text-[var(--color-uwgb-accent)]" : "text-white/60"}`}
         >
           <User size={24} />
           <span className="text-[10px] font-bold">Profile</span>
