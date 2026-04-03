@@ -19,6 +19,7 @@
 
   --animate-flutter: flutter 3s ease-in-out infinite alternate;
   --animate-flutter-fast: flutter-fast 2s ease-in-out infinite alternate;
+  --animate-bob: bob 4s ease-in-out infinite alternate;
 
   @keyframes flutter {
     0% { transform: translateY(0px); }
@@ -27,6 +28,10 @@
   @keyframes flutter-fast {
     0% { transform: translateY(0px); }
     100% { transform: translateY(-6px); }
+  }
+  @keyframes bob {
+    0% { transform: translateY(0px); }
+    100% { transform: translateY(-2px); }
   }
 }
 

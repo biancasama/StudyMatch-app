@@ -308,7 +308,7 @@ const Avatar = ({ student, isMatched, onClick, isMissedClassMode, targetCourse, 
   if (isUser) {
     return (
       <motion.div
-        className="absolute z-30 animate-flutter-fast"
+        className="absolute z-30 animate-bob"
         style={{ left: `50%`, top: `50%`, transform: 'translate(-50%, -100%)' }}
       >
         <div className="relative flex flex-col items-center">
@@ -328,7 +328,7 @@ const Avatar = ({ student, isMatched, onClick, isMissedClassMode, targetCourse, 
 
   return (
     <motion.div
-      className={`absolute cursor-pointer z-10 ${opacity} transition-all duration-500 ${shouldGlow ? 'animate-flutter-fast' : 'animate-flutter'}`}
+      className={`absolute cursor-pointer z-10 ${opacity} transition-all duration-500 ${shouldGlow ? 'animate-flutter-fast' : 'animate-bob'}`}
       animate={{ left: `${pos.x}%`, top: `${pos.y}%` }}
       transition={{ duration: 3, ease: "linear" }}
       onClick={onClick}
