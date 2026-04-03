@@ -2,6 +2,10 @@
 
 StudyMatch is an interactive, Gen Z-focused platform designed to help University of Wisconsin-Green Bay (UWGB) students find study partners, coordinate meeting spots, and share class notes.
 
+**Built as a solo project for the [Build with AI 2026](https://gdg.community.dev/events/details/google-gdg-on-campus-at-uw-green-bay-presents-build-with-ai-2026/) hackathon hosted by GDG on Campus at UW-Green Bay.**
+
+This project was built entirely by a solo developer, leveraging the power of Google's AI tools and platforms to rapidly prototype and deploy a functional, AI-integrated application.
+
 ## 🚀 Features
 
 *   **AI-Powered Matching:** Uses Google Gemini to analyze student profiles and suggest the best study partners based on shared courses, personality, and learning styles.
