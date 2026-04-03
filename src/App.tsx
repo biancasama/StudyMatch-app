@@ -26,6 +26,7 @@ import {
 import { motion, AnimatePresence } from "motion/react";
 import { GoogleGenAI, Type, FunctionDeclaration } from "@google/genai";
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
+import { Chatbot } from "./components/Chatbot";
 
 // --- Types ---
 
@@ -705,16 +706,23 @@ If the user mentions "meet", suggest meeting at ${BUILDINGS[Math.floor(Math.rand
 
       const prompt = `
         Analyze why ${userProfile.name} and ${student.name} are a good study match at UWGB.
+        
         User Profile: ${JSON.stringify(userProfile)}
         Student Profile: ${JSON.stringify(student)}
+        
+        Compare their:
+        - Shared courses
+        - Availability (look for overlaps)
+        - Personality types (e.g., introvert/extrovert)
+        - Learning styles (e.g., visual/auditory)
         
         You MUST use the provided tools to get more information about the campus, courses, and study spots before generating the final response.
         
         Generate a response with:
         1. ONE punchy headline sentence max (e.g., "You're basically the same person 🎯")
-        2. 3 scannable bullet points with emoji icons instead of walls of text. Each bullet must be short (max 15 words).
+        2. 3 scannable bullet points with emoji icons instead of walls of text. Each bullet must be short (max 15 words) and highlight specific shared traits like availability, learning styles, or shared courses.
         3. A single colored "vibe tag" pill at the bottom (e.g., "Balanced duo ⚖️" or "Study powerhouse 💪" or "Quiet grinders 🤫") based on personality match.
-        4. A short paragraph (under 80 words) explaining the match in more detail.
+        4. A short, nuanced paragraph (under 80 words) explaining the match, specifically mentioning how their study habits and availability complement each other.
         5. matchScore (number 0-100)
         6. suggestedMeetingSpot (string, name of a campus building)
       `;
@@ -1053,6 +1061,7 @@ If the user mentions "meet", suggest meeting at ${BUILDINGS[Math.floor(Math.rand
                   </TransformComponent>
                 </TransformWrapper>
               </div>
+              <Chatbot />
             </motion.div>
           )}
 
