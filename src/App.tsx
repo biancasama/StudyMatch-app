@@ -180,21 +180,34 @@ const CONCOURSES = [
   { x: 15, y: 55, w: 5, h: 5 },
 ];
 
+const COURSE_COLORS: Record<string, string> = {
+  "Intro to Psychology": "bg-rose-100 text-rose-700 border-rose-200",
+  "Environmental Science": "bg-emerald-100 text-emerald-700 border-emerald-200",
+  "Business Analytics": "bg-blue-100 text-blue-700 border-blue-200",
+  "Digital Marketing": "bg-purple-100 text-purple-700 border-purple-200",
+  "Computer Science I": "bg-indigo-100 text-indigo-700 border-indigo-200",
+  "American History": "bg-amber-100 text-amber-700 border-amber-200",
+  "Creative Writing": "bg-pink-100 text-pink-700 border-pink-200",
+  "Human Biology": "bg-cyan-100 text-cyan-700 border-cyan-200"
+};
+
 // --- Components ---
 
 interface AvatarProps {
-  student: Student;
-  isMatched: boolean;
-  onClick: () => void;
-  isMissedClassMode: boolean;
-  targetCourse: string | null;
+  student?: Student;
+  isMatched?: boolean;
+  onClick?: () => void;
+  isMissedClassMode?: boolean;
+  targetCourse?: string | null;
+  isUser?: boolean;
   key?: string | number;
 }
 
-const Avatar = ({ student, isMatched, onClick, isMissedClassMode, targetCourse }: AvatarProps) => {
-  const [pos, setPos] = useState({ x: student.initialX, y: student.initialY });
+const Avatar = ({ student, isMatched, onClick, isMissedClassMode, targetCourse, isUser }: AvatarProps) => {
+  const [pos, setPos] = useState(isUser ? { x: 50, y: 50 } : { x: student!.initialX, y: student!.initialY });
   
   useEffect(() => {
+    if (isUser) return;
     const interval = setInterval(() => {
       setPos(prev => ({
         x: Math.max(0, Math.min(90, prev.x + (Math.random() - 0.5) * 5)),
@@ -202,31 +215,67 @@ const Avatar = ({ student, isMatched, onClick, isMissedClassMode, targetCourse }
       }));
     }, 3000);
     return () => clearInterval(interval);
-  }, []);
+  }, [isUser]);
 
-  const hasNotes = targetCourse && student.notesAvailable.includes(targetCourse);
+  if (isUser) {
+    return (
+      <motion.div
+        className="absolute z-30"
+        style={{ left: `50%`, top: `50%`, transform: 'translate(-50%, -50%)' }}
+      >
+        <div className="relative flex flex-col items-center">
+          <div className="absolute inset-0 -m-2 bg-blue-400/40 rounded-full blur-md animate-pulse" />
+          <div className="w-10 h-10 rounded-full border-4 border-white shadow-xl bg-blue-500 flex items-center justify-center overflow-hidden">
+            <User size={20} className="text-white fill-white/20" />
+          </div>
+          <div className="bg-blue-600 text-white px-2 py-0.5 rounded-full text-[10px] font-black mt-1 shadow-md border border-white">
+            YOU
+          </div>
+        </div>
+      </motion.div>
+    );
+  }
+
+  const hasNotes = targetCourse && student!.notesAvailable.includes(targetCourse);
   const shouldGlow = isMissedClassMode ? hasNotes : isMatched;
+  const opacity = !shouldGlow && !isMissedClassMode ? "opacity-30" : "opacity-100";
+  const initials = student!.name.split(' ').map(n => n[0]).join('');
+  const personalityInitial = student!.personality[0].toUpperCase();
 
   return (
     <motion.div
-      className="absolute cursor-pointer z-10"
+      className={`absolute cursor-pointer z-10 ${opacity} transition-opacity duration-500`}
       animate={{ left: `${pos.x}%`, top: `${pos.y}%` }}
       transition={{ duration: 3, ease: "linear" }}
       onClick={onClick}
     >
       <div className="relative flex flex-col items-center">
         {shouldGlow && (
-          <div className="absolute inset-0 -m-2 bg-yellow-400/50 rounded-full blur-md animate-pulse" />
+          <>
+            <div className="absolute inset-0 -m-2 bg-yellow-400/50 rounded-full blur-md animate-pulse" />
+            {/* Personality Badge */}
+            <div className="absolute -top-1 -right-1 w-4 h-4 bg-white rounded-full border border-slate-200 shadow-sm flex items-center justify-center z-20">
+              <span className="text-[8px] font-black text-slate-700">{personalityInitial}</span>
+            </div>
+          </>
         )}
+        
         <div 
-          className="w-8 h-8 rounded-full border-2 border-white shadow-lg flex items-center justify-center overflow-hidden"
-          style={{ backgroundColor: student.avatarColor }}
+          className={`w-8 h-8 rounded-full border-2 border-white shadow-lg flex items-center justify-center overflow-hidden transition-all ${shouldGlow ? 'scale-110' : 'scale-90'}`}
+          style={{ backgroundColor: student!.avatarColor }}
         >
-          <User size={16} className="text-white" />
+          {shouldGlow ? (
+            <User size={16} className="text-white" />
+          ) : (
+            <span className="text-[10px] font-bold text-white/80">{initials}</span>
+          )}
         </div>
-        <div className="bg-white/90 px-1.5 py-0.5 rounded text-[8px] font-bold mt-1 shadow-sm border border-gray-200">
-          {student.name}
-        </div>
+        
+        {shouldGlow && (
+          <div className="bg-white/90 px-1.5 py-0.5 rounded-full text-[8px] font-bold mt-1 shadow-sm border border-gray-200">
+            {student!.name}
+          </div>
+        )}
       </div>
     </motion.div>
   );
@@ -247,6 +296,7 @@ export default function App() {
   const [matchExplanation, setMatchExplanation] = useState<string | null>(null);
   const [isLoadingMatch, setIsLoadingMatch] = useState(false);
   const [missedCourse, setMissedCourse] = useState<string | null>(null);
+  const [showFullExplanation, setShowFullExplanation] = useState(false);
 
   // Chat State
   const [chats, setChats] = useState<Record<string, { sender: string, text: string, timestamp: Date }[]>>({});
@@ -270,10 +320,10 @@ export default function App() {
         Explain why ${userProfile.name} and ${student.name} are a good study match at UWGB.
         User Profile: ${JSON.stringify(userProfile)}
         Student Profile: ${JSON.stringify(student)}
-        Keep it friendly, academic, and under 50 words. Mention specific shared courses or complementary styles.
+        Keep it friendly, academic, and under 80 words. Mention specific shared courses or complementary styles.
       `;
       const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
+        model: "gemini-flash-latest",
         contents: prompt,
       });
       setMatchExplanation(response.text || "You both have great potential to succeed together!");
@@ -374,8 +424,8 @@ export default function App() {
                   </div>
 
                   {/* The Arboretum (Forest) */}
-                  <div className="absolute right-0 top-0 w-[20%] h-full bg-green-100/30 border-l border-green-200 pointer-events-none flex items-center justify-center">
-                    <span className="text-[10px] font-bold text-green-300 rotate-90">The Arboretum</span>
+                  <div className="absolute right-0 top-0 w-[20%] h-full bg-green-100/30 border-l border-green-200 pointer-events-none flex flex-col items-center justify-center gap-2">
+                    <Trees size={24} className="text-green-300" />
                   </div>
 
                   {/* The Bay (Water) */}
@@ -411,7 +461,9 @@ export default function App() {
                         backgroundColor: b.color
                       }}
                     >
-                      <span className="text-[8px] font-bold text-slate-600 leading-tight">{b.name}</span>
+                      <div className="bg-white/80 px-2 py-0.5 rounded-full shadow-sm border border-white/50">
+                        <span className="text-[8px] font-black text-slate-700 leading-tight whitespace-nowrap">{b.name.split(' (')[0]}</span>
+                      </div>
                     </div>
                   ))}
 
@@ -447,6 +499,7 @@ export default function App() {
                   ))}
 
                   {/* Avatars */}
+                  <Avatar isUser />
                   {PRELOADED_STUDENTS.map(student => (
                     <Avatar 
                       key={student.id} 
@@ -748,10 +801,10 @@ export default function App() {
               <div className="flex justify-between items-start mb-6">
                 <div className="flex items-center gap-4">
                   <div 
-                    className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-inner"
+                    className="w-16 h-16 rounded-full flex items-center justify-center shadow-inner text-white text-2xl font-black"
                     style={{ backgroundColor: selectedStudent.avatarColor }}
                   >
-                    <User size={32} className="text-white" />
+                    {selectedStudent.name[0]}
                   </div>
                   <div>
                     <h3 className="text-2xl font-bold">{selectedStudent.name}</h3>
@@ -778,10 +831,34 @@ export default function App() {
                       Asking Gemini...
                     </div>
                   ) : (
-                    <p className="text-sm text-slate-700 leading-relaxed">
-                      {matchExplanation}
-                    </p>
+                    <div>
+                      <p className={`text-sm text-slate-700 leading-relaxed ${!showFullExplanation ? 'line-clamp-3' : ''}`}>
+                        {matchExplanation}
+                      </p>
+                      {matchExplanation && matchExplanation.length > 150 && (
+                        <button 
+                          onClick={() => setShowFullExplanation(!showFullExplanation)}
+                          className="text-green-600 text-xs font-bold mt-2"
+                        >
+                          {showFullExplanation ? "Show less" : "Read more"}
+                        </button>
+                      )}
+                    </div>
                   )}
+                </div>
+
+                <div className="space-y-2">
+                  <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Courses</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedStudent.courses.map(course => (
+                      <span 
+                        key={course} 
+                        className={`px-3 py-1 rounded-full text-[10px] font-bold border ${COURSE_COLORS[course] || 'bg-slate-100 text-slate-600 border-slate-200'}`}
+                      >
+                        {course}
+                      </span>
+                    ))}
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
@@ -803,16 +880,20 @@ export default function App() {
                   </div>
                 </div>
 
-                <div className="flex gap-3 pt-2">
+                <div className="grid grid-cols-2 gap-3 pt-2">
                   <button 
                     onClick={() => openChat(selectedStudent)}
-                    className="flex-1 bg-green-600 text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-green-100 active:scale-95 transition-transform"
+                    className="bg-green-600 text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-green-100 active:scale-95 transition-transform"
                   >
                     <MessageCircle size={20} />
                     Message
                   </button>
-                  <button className="w-14 h-14 bg-slate-100 text-slate-600 rounded-2xl flex items-center justify-center active:scale-95 transition-transform">
-                    <CheckCircle2 size={24} />
+                  <button 
+                    onClick={() => setSelectedStudent(null)}
+                    className="bg-slate-100 text-slate-600 py-4 rounded-2xl font-bold active:scale-95 transition-transform flex flex-col items-center justify-center gap-0.5"
+                  >
+                    <CheckCircle2 size={20} />
+                    <span className="text-[10px] uppercase tracking-tighter">Connect Later</span>
                   </button>
                 </div>
               </div>
