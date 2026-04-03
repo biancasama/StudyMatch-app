@@ -19,7 +19,8 @@ import {
   TreePine,
   Trees,
   Info,
-  Users as UsersIcon
+  Users as UsersIcon,
+  ChevronLeft
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { GoogleGenAI } from "@google/genai";
@@ -232,7 +233,7 @@ const Avatar = ({ student, isMatched, onClick, isMissedClassMode, targetCourse }
 };
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<"map" | "profile" | "missed">("map");
+  const [activeTab, setActiveTab] = useState<"map" | "profile" | "missed" | "messages">("map");
   const [userProfile, setUserProfile] = useState<UserProfile>({
     name: "Phoenix",
     courses: ["Intro to Psychology", "Computer Science I"],
@@ -246,6 +247,18 @@ export default function App() {
   const [matchExplanation, setMatchExplanation] = useState<string | null>(null);
   const [isLoadingMatch, setIsLoadingMatch] = useState(false);
   const [missedCourse, setMissedCourse] = useState<string | null>(null);
+
+  // Chat State
+  const [chats, setChats] = useState<Record<string, { sender: string, text: string, timestamp: Date }[]>>({});
+  const [activeChatStudent, setActiveChatStudent] = useState<Student | null>(null);
+  const [newMessage, setNewMessage] = useState("");
+  const chatEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (chatEndRef.current) {
+      chatEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [chats, activeChatStudent]);
 
   const ai = useMemo(() => new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" }), []);
 
@@ -292,6 +305,30 @@ export default function App() {
   const handleBuildingClick = (building: typeof BUILDINGS[0]) => {
     setSelectedStudent(null);
     setSelectedBuilding(building);
+  };
+
+  const sendMessage = (studentId: string) => {
+    if (!newMessage.trim()) return;
+    const msg = { sender: userProfile.name, text: newMessage, timestamp: new Date() };
+    setChats(prev => ({
+      ...prev,
+      [studentId]: [...(prev[studentId] || []), msg]
+    }));
+    setNewMessage("");
+  };
+
+  const openChat = (student: Student) => {
+    if (!chats[student.id]) {
+      const greeting = { 
+        sender: student.name, 
+        text: `Hey! I saw we're both in ${student.courses.find(c => userProfile.courses.includes(c)) || "the same class"}. Want to study together?`, 
+        timestamp: new Date() 
+      };
+      setChats(prev => ({ ...prev, [student.id]: [greeting] }));
+    }
+    setActiveChatStudent(student);
+    setActiveTab("messages");
+    setSelectedStudent(null);
   };
 
   return (
@@ -437,6 +474,129 @@ export default function App() {
                   )}
                 </div>
               </div>
+            </motion.div>
+          )}
+
+          {activeTab === "messages" && (
+            <motion.div 
+              key="messages"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-white flex flex-col"
+            >
+              {activeChatStudent ? (
+                <div className="flex flex-col h-full">
+                  {/* Chat Header */}
+                  <div className="p-4 border-b border-slate-100 flex items-center gap-3">
+                    <button onClick={() => setActiveChatStudent(null)} className="p-2 -ml-2 text-slate-400">
+                      <ChevronLeft size={24} />
+                    </button>
+                    <div 
+                      className="w-10 h-10 rounded-xl flex items-center justify-center shadow-inner"
+                      style={{ backgroundColor: activeChatStudent.avatarColor }}
+                    >
+                      <User size={20} className="text-white" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold">{activeChatStudent.name}</h3>
+                      <p className="text-[10px] text-green-600 font-bold uppercase tracking-wider">Study Partner</p>
+                    </div>
+                  </div>
+
+                  {/* Chat Messages */}
+                  <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50/50">
+                    <div className="text-center py-4">
+                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Chat started with {activeChatStudent.name}</p>
+                    </div>
+                    {(chats[activeChatStudent.id] || []).map((msg, i) => (
+                      <div key={i} className={`flex ${msg.sender === userProfile.name ? 'justify-end' : 'justify-start'}`}>
+                        <div className={`max-w-[80%] p-3 rounded-2xl text-sm ${msg.sender === userProfile.name ? 'bg-green-600 text-white rounded-tr-none' : 'bg-white border border-slate-200 text-slate-700 rounded-tl-none'}`}>
+                          {msg.text}
+                          <div className={`text-[8px] mt-1 opacity-50 ${msg.sender === userProfile.name ? 'text-white' : 'text-slate-400'}`}>
+                            {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    <div ref={chatEndRef} />
+                  </div>
+
+                  {/* Chat Input */}
+                  <div className="p-4 border-t border-slate-100 bg-white">
+                    <div className="flex gap-2">
+                      <input 
+                        type="text" 
+                        value={newMessage}
+                        onChange={e => setNewMessage(e.target.value)}
+                        onKeyPress={e => e.key === 'Enter' && sendMessage(activeChatStudent.id)}
+                        placeholder="Type a message..."
+                        className="flex-1 p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-green-500 transition-colors"
+                      />
+                      <button 
+                        onClick={() => sendMessage(activeChatStudent.id)}
+                        className="w-12 h-12 bg-green-600 text-white rounded-xl flex items-center justify-center shadow-lg shadow-green-100 active:scale-95 transition-transform"
+                      >
+                        <Zap size={20} fill="currentColor" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col h-full p-6">
+                  <h2 className="text-2xl font-bold mb-6">Messages</h2>
+                  <div className="space-y-3">
+                    {Object.keys(chats).length > 0 ? (
+                      Object.keys(chats).map(studentId => {
+                        const student = PRELOADED_STUDENTS.find(s => s.id === studentId);
+                        const lastMsg = chats[studentId][chats[studentId].length - 1];
+                        if (!student) return null;
+                        return (
+                          <button 
+                            key={studentId}
+                            onClick={() => setActiveChatStudent(student)}
+                            className="w-full flex items-center gap-4 p-4 bg-slate-50 border border-slate-200 rounded-2xl hover:border-green-300 transition-colors text-left"
+                          >
+                            <div 
+                              className="w-12 h-12 rounded-xl flex items-center justify-center shadow-inner shrink-0"
+                              style={{ backgroundColor: student.avatarColor }}
+                            >
+                              <User size={24} className="text-white" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex justify-between items-baseline">
+                                <h4 className="font-bold truncate">{student.name}</h4>
+                                {lastMsg && (
+                                  <span className="text-[10px] text-slate-400">{lastMsg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                )}
+                              </div>
+                              <p className="text-sm text-slate-500 truncate">
+                                {lastMsg ? lastMsg.text : "Start a conversation..."}
+                              </p>
+                            </div>
+                          </button>
+                        );
+                      })
+                    ) : (
+                      <div className="flex-1 flex flex-col items-center justify-center text-center space-y-4 py-20">
+                        <div className="bg-slate-100 p-6 rounded-full">
+                          <MessageCircle size={48} className="text-slate-300" />
+                        </div>
+                        <div>
+                          <h3 className="font-bold text-slate-700">No messages yet</h3>
+                          <p className="text-sm text-slate-400 max-w-[200px]">Find study partners on the map to start a conversation!</p>
+                        </div>
+                        <button 
+                          onClick={() => setActiveTab("map")}
+                          className="text-green-600 font-bold text-sm"
+                        >
+                          Go to Map
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </motion.div>
           )}
 
@@ -644,7 +804,10 @@ export default function App() {
                 </div>
 
                 <div className="flex gap-3 pt-2">
-                  <button className="flex-1 bg-green-600 text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-green-100 active:scale-95 transition-transform">
+                  <button 
+                    onClick={() => openChat(selectedStudent)}
+                    className="flex-1 bg-green-600 text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-green-100 active:scale-95 transition-transform"
+                  >
                     <MessageCircle size={20} />
                     Message
                   </button>
@@ -715,6 +878,18 @@ export default function App() {
         >
           <AlertCircle size={24} />
           <span className="text-[10px] font-bold">Missed</span>
+        </button>
+        <button 
+          onClick={() => setActiveTab("messages")}
+          className={`flex flex-col items-center gap-1 transition-colors ${activeTab === "messages" ? "text-green-600" : "text-slate-400"}`}
+        >
+          <div className="relative">
+            <MessageCircle size={24} />
+            {Object.keys(chats).length > 0 && (
+              <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white" />
+            )}
+          </div>
+          <span className="text-[10px] font-bold">Messages</span>
         </button>
         <button 
           onClick={() => setActiveTab("profile")}
