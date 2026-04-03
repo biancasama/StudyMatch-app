@@ -15,7 +15,11 @@ import {
   Zap, 
   CheckCircle2,
   AlertCircle,
-  GraduationCap
+  GraduationCap,
+  TreePine,
+  Trees,
+  Info,
+  Users as UsersIcon
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { GoogleGenAI } from "@google/genai";
@@ -136,6 +140,23 @@ const BUILDINGS = [
   { name: "Studio Arts (SA)", address: "2420 Nicolet Dr, Green Bay, WI 54311", x: 10, y: 55, w: 15, h: 15, color: "#e2e8f0" },
   { name: "Kress Center (KEC)", address: "2358 Leon Bond Dr, Green Bay, WI 54311", x: 75, y: 10, w: 20, h: 20, color: "#cbd5e1" },
   { name: "Weidner Center", address: "2420 Nicolet Dr, Green Bay, WI 54311", x: 10, y: 5, w: 20, h: 10, color: "#e2e8f0" },
+];
+
+const DECORATIONS = [
+  { x: 5, y: 5 }, { x: 10, y: 15 }, { x: 2, y: 30 }, { x: 8, y: 45 },
+  { x: 90, y: 5 }, { x: 95, y: 20 }, { x: 88, y: 35 }, { x: 92, y: 50 },
+  { x: 50, y: 5 }, { x: 60, y: 10 }, { x: 40, y: 15 },
+  { x: 20, y: 80 }, { x: 30, y: 85 }, { x: 70, y: 85 }, { x: 80, y: 90 },
+];
+
+const LANDMARKS = [
+  { name: "Phoenix Statue", icon: "zap", x: 28, y: 62, color: "#f59e0b" },
+  { name: "Communiversity Park", icon: "tree", x: 5, y: 25, color: "#10b981" },
+  { name: "The Arboretum", icon: "trees", x: 85, y: 10, color: "#059669" },
+  { name: "Main Entrance Sign", icon: "info", x: 50, y: 90, color: "#065f46" },
+  { name: "Student Plaza", icon: "users", x: 38, y: 62, color: "#64748b" },
+  { name: "UWGB Sign", icon: "info", x: 45, y: 85, color: "#166534" },
+  { name: "The Bay", icon: "tree", x: 2, y: 15, color: "#3b82f6" },
 ];
 
 const CONCOURSES = [
@@ -310,6 +331,21 @@ export default function App() {
                   {/* Grid Lines */}
                   <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "radial-gradient(#065f46 1px, transparent 1px)", backgroundSize: "20px 20px" }} />
                   
+                  {/* Student Plaza */}
+                  <div className="absolute left-[35%] top-[60%] w-[10%] h-[5%] bg-slate-200/50 rounded-full border border-slate-300 pointer-events-none flex items-center justify-center">
+                    <span className="text-[6px] font-bold text-slate-400">Plaza</span>
+                  </div>
+
+                  {/* The Arboretum (Forest) */}
+                  <div className="absolute right-0 top-0 w-[20%] h-full bg-green-100/30 border-l border-green-200 pointer-events-none flex items-center justify-center">
+                    <span className="text-[10px] font-bold text-green-300 rotate-90">The Arboretum</span>
+                  </div>
+
+                  {/* The Bay (Water) */}
+                  <div className="absolute left-0 top-0 w-[30%] h-[20%] bg-blue-100/50 rounded-br-[100px] border-b border-r border-blue-200 pointer-events-none flex items-center justify-center">
+                    <span className="text-[10px] font-bold text-blue-300 -rotate-12">The Bay</span>
+                  </div>
+
                   {/* Concourses (Tunnels) */}
                   {CONCOURSES.map((c, i) => (
                     <div 
@@ -339,6 +375,37 @@ export default function App() {
                       }}
                     >
                       <span className="text-[8px] font-bold text-slate-600 leading-tight">{b.name}</span>
+                    </div>
+                  ))}
+
+                  {/* Decorations (Trees) */}
+                  {DECORATIONS.map((d, i) => (
+                    <div 
+                      key={`d-${i}`}
+                      className="absolute text-green-800/20 pointer-events-none"
+                      style={{ left: `${d.x}%`, top: `${d.y}%` }}
+                    >
+                      <TreePine size={16} fill="currentColor" />
+                    </div>
+                  ))}
+
+                  {/* Landmarks */}
+                  {LANDMARKS.map((l, i) => (
+                    <div 
+                      key={`l-${i}`}
+                      className="absolute flex flex-col items-center group cursor-help"
+                      style={{ left: `${l.x}%`, top: `${l.y}%` }}
+                    >
+                      <div className="bg-white/80 p-1 rounded-full shadow-sm border border-slate-200" style={{ color: l.color }}>
+                        {l.icon === "zap" && <Zap size={12} fill="currentColor" />}
+                        {l.icon === "tree" && <TreePine size={12} fill="currentColor" />}
+                        {l.icon === "trees" && <Trees size={12} fill="currentColor" />}
+                        {l.icon === "info" && <Info size={12} fill="currentColor" />}
+                        {l.icon === "users" && <UsersIcon size={12} fill="currentColor" />}
+                      </div>
+                      <div className="absolute bottom-full mb-1 bg-slate-800 text-white text-[8px] px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                        {l.name}
+                      </div>
                     </div>
                   ))}
 
