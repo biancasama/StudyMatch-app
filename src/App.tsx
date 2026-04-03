@@ -23,7 +23,7 @@ import {
   ChevronLeft
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, Type } from "@google/genai";
 
 // --- Types ---
 
@@ -375,7 +375,7 @@ export default function App() {
   });
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [selectedBuilding, setSelectedBuilding] = useState<typeof BUILDINGS[0] | null>(null);
-  const [matchExplanation, setMatchExplanation] = useState<string | null>(null);
+  const [matchExplanation, setMatchExplanation] = useState<{headline: string, bullets: string[], vibeTag: string, paragraph: string} | null>(null);
   const [isLoadingMatch, setIsLoadingMatch] = useState(false);
   const [missedCourse, setMissedCourse] = useState<string | null>(null);
   const [showFullExplanation, setShowFullExplanation] = useState(false);
@@ -399,19 +399,44 @@ export default function App() {
     setMatchExplanation(null);
     try {
       const prompt = `
-        Explain why ${userProfile.name} and ${student.name} are a good study match at UWGB.
+        Analyze why ${userProfile.name} and ${student.name} are a good study match at UWGB.
         User Profile: ${JSON.stringify(userProfile)}
         Student Profile: ${JSON.stringify(student)}
-        Keep it friendly, academic, and under 80 words. Mention specific shared courses or complementary styles.
+        
+        Generate a response with:
+        1. ONE punchy headline sentence max (e.g., "You're basically the same person 🎯")
+        2. 3 scannable bullet points with emoji icons instead of walls of text. Each bullet must be short (max 15 words).
+        3. A single colored "vibe tag" pill at the bottom (e.g., "Balanced duo ⚖️" or "Study powerhouse 💪" or "Quiet grinders 🤫") based on personality match.
+        4. A short paragraph (under 80 words) explaining the match in more detail.
       `;
       const response = await ai.models.generateContent({
         model: "gemini-flash-latest",
         contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              headline: { type: Type.STRING },
+              bullets: { type: Type.ARRAY, items: { type: Type.STRING } },
+              vibeTag: { type: Type.STRING },
+              paragraph: { type: Type.STRING }
+            },
+            required: ["headline", "bullets", "vibeTag", "paragraph"]
+          }
+        }
       });
-      setMatchExplanation(response.text || "You both have great potential to succeed together!");
+      
+      const result = JSON.parse(response.text || "{}");
+      setMatchExplanation(result);
     } catch (error) {
       console.error("Gemini Error:", error);
-      setMatchExplanation("Looks like a great match based on your shared interests!");
+      setMatchExplanation({
+        headline: "Great Match! 🌟",
+        bullets: ["📚 Shared interests", "🧠 Complementary styles", "🕐 Potential study buddies"],
+        vibeTag: "Study Duo 🤝",
+        paragraph: "Looks like a great match based on your shared interests!"
+      });
     } finally {
       setIsLoadingMatch(false);
     }
@@ -969,28 +994,43 @@ export default function App() {
               </div>
 
               <div className="space-y-4">
-                <div className="bg-white p-4 rounded-2xl border border-slate-100 wavy-border-top shadow-sm">
+                <div className="bg-[#F0FAF4] p-4 rounded-2xl border border-slate-100 wavy-border-top shadow-sm">
                   <h4 className="text-xs font-bold text-[var(--color-uwgb-muted)] uppercase tracking-wider mb-2">Why you match</h4>
                   {isLoadingMatch ? (
                     <div className="flex items-center gap-2 text-sm text-[var(--color-uwgb-muted)] italic">
                       <div className="w-4 h-4 border-2 border-[var(--color-uwgb-accent)] border-t-transparent rounded-full animate-spin" />
                       Asking Gemini...
                     </div>
-                  ) : (
-                    <div>
-                      <p className={`text-sm text-[var(--color-uwgb-text)] leading-relaxed ${!showFullExplanation ? 'line-clamp-3' : ''}`}>
-                        {matchExplanation}
-                      </p>
-                      {matchExplanation && matchExplanation.length > 150 && (
-                        <button 
-                          onClick={() => setShowFullExplanation(!showFullExplanation)}
-                          className="text-[var(--color-uwgb-accent)] text-xs font-bold mt-2"
-                        >
-                          {showFullExplanation ? "Show less" : "Read more"}
-                        </button>
+                  ) : matchExplanation ? (
+                    <div className="space-y-3">
+                      <h5 className="text-[18px] font-bold text-[var(--color-uwgb-text)] leading-tight">
+                        {matchExplanation.headline}
+                      </h5>
+                      <ul className="space-y-2">
+                        {matchExplanation.bullets.map((bullet, i) => (
+                          <li key={i} className="text-[16px] text-[var(--color-uwgb-text)] leading-[1.6]">
+                            {bullet}
+                          </li>
+                        ))}
+                      </ul>
+                      <div className="inline-block bg-[var(--color-uwgb-accent)] text-white px-3 py-1 rounded-full text-sm font-bold mt-2">
+                        {matchExplanation.vibeTag}
+                      </div>
+                      
+                      {showFullExplanation && (
+                        <p className="text-[16px] text-[var(--color-uwgb-text)] leading-[1.6] mt-4 pt-4 border-t border-green-200/50">
+                          {matchExplanation.paragraph}
+                        </p>
                       )}
+                      
+                      <button 
+                        onClick={() => setShowFullExplanation(!showFullExplanation)}
+                        className="text-[var(--color-uwgb-accent)] text-sm font-bold mt-2 block"
+                      >
+                        {showFullExplanation ? "Show less" : "Read more"}
+                      </button>
                     </div>
-                  )}
+                  ) : null}
                 </div>
 
                 <div className="space-y-2">
