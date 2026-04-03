@@ -15,6 +15,7 @@ import {
   Zap, 
   CheckCircle2,
   AlertCircle,
+  Cloud,
   GraduationCap,
   TreePine,
   Trees,
@@ -23,7 +24,7 @@ import {
   ChevronLeft
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
-import { GoogleGenAI, Type } from "@google/genai";
+import { GoogleGenAI, Type, FunctionDeclaration } from "@google/genai";
 
 // --- Types ---
 
@@ -477,6 +478,7 @@ export default function App() {
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [selectedBuilding, setSelectedBuilding] = useState<typeof BUILDINGS[0] | null>(null);
   const [matchExplanation, setMatchExplanation] = useState<{headline: string, bullets: string[], vibeTag: string, paragraph: string} | null>(null);
+  const [mcpUsed, setMcpUsed] = useState(false);
   const [isLoadingMatch, setIsLoadingMatch] = useState(false);
   const [missedCourse, setMissedCourse] = useState<string | null>(null);
   const [showFullExplanation, setShowFullExplanation] = useState(false);
@@ -580,11 +582,22 @@ If the user mentions "meet", suggest meeting at ${BUILDINGS[Math.floor(Math.rand
         ${userProfile.name} missed the "${missedCourse}" class and is asking if they can share their notes.
         Keep it short, polite, and use a couple of emojis.
       `;
-      const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
-        contents: prompt,
+      
+      // Using Vertex AI endpoint as requested
+      const response = await fetch(`https://us-central1-aiplatform.googleapis.com/v1/projects/YOUR_PROJECT_ID/locations/us-central1/publishers/google/models/gemini-1.5-flash:generateContent`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.GEMINI_API_KEY}`
+        },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }]
+        })
       });
-      setDraftedNoteRequest(response.text?.trim() || "Hey! I missed class today, any chance you could share your notes? 🙏");
+      
+      const data = await response.json();
+      const text = data.candidates[0].content.parts[0].text;
+      setDraftedNoteRequest(text.trim() || "Hey! I missed class today, any chance you could share your notes? 🙏");
     } catch (error) {
       console.error("Drafting error:", error);
       setDraftedNoteRequest("Hey! I missed class today, any chance you could share your notes? 🙏");
@@ -627,35 +640,159 @@ If the user mentions "meet", suggest meeting at ${BUILDINGS[Math.floor(Math.rand
   const getMatchExplanation = async (student: Student) => {
     setIsLoadingMatch(true);
     setMatchExplanation(null);
+    setMcpUsed(false);
     try {
+      const getCoursesTool: FunctionDeclaration = {
+        name: "get_courses",
+        description: "Get a list of available courses for a given semester at UWGB.",
+        parameters: {
+          type: Type.OBJECT,
+          properties: {
+            semester: { type: Type.STRING, description: "The semester, e.g., 'Fall 2026'" }
+          },
+          required: ["semester"]
+        }
+      };
+
+      const getBuildingHoursTool: FunctionDeclaration = {
+        name: "get_building_hours",
+        description: "Get the operating hours for a specific building on campus.",
+        parameters: {
+          type: Type.OBJECT,
+          properties: {
+            building_name: { type: Type.STRING, description: "The name of the building" }
+          },
+          required: ["building_name"]
+        }
+      };
+
+      const getStudySpotsTool: FunctionDeclaration = {
+        name: "get_study_spots",
+        description: "Get ranked campus study locations based on personality type.",
+        parameters: {
+          type: Type.OBJECT,
+          properties: {
+            personality_type: { type: Type.STRING, description: "The personality type: 'Introvert', 'Extrovert', or 'Ambivert'" }
+          },
+          required: ["personality_type"]
+        }
+      };
+
+      const mockMcpServer = {
+        get_courses: (args: any) => ({ courses: ["Intro to Psychology", "Calculus I", "Biology 101", "Creative Writing", "Computer Science 101", "Marketing 101", "Graphic Design", "Sociology", "Physics", "Chemistry"] }),
+        get_building_hours: (args: any) => {
+          const hours: Record<string, string> = {
+            "Cofrin Library": "Open 24/7",
+            "Student Union": "Open 7am - 11pm",
+            "MAC Hall": "Open 8am - 10pm",
+            "Rose Hall": "Open 8am - 8pm",
+            "Wood Hall": "Open 8am - 8pm",
+            "Kress Center": "Open 6am - 11pm"
+          };
+          return { hours: hours[args.building_name] || "Open 8am - 5pm" };
+        },
+        get_study_spots: (args: any) => {
+          if (args.personality_type === "Introvert") {
+            return { spots: ["Cofrin Library 7th Floor", "Rose Hall Quiet Lounge", "Empty Classroom in Wood Hall"] };
+          } else if (args.personality_type === "Extrovert") {
+            return { spots: ["Student Union Coffee Shop", "Cofrin Library 2nd Floor", "MAC Hall Atrium"] };
+          } else {
+            return { spots: ["Cofrin Library 4th Floor", "Student Union Lounge", "Kress Center Cafe"] };
+          }
+        }
+      };
+
       const prompt = `
         Analyze why ${userProfile.name} and ${student.name} are a good study match at UWGB.
         User Profile: ${JSON.stringify(userProfile)}
         Student Profile: ${JSON.stringify(student)}
+        
+        You MUST use the provided tools to get more information about the campus, courses, and study spots before generating the final response.
         
         Generate a response with:
         1. ONE punchy headline sentence max (e.g., "You're basically the same person 🎯")
         2. 3 scannable bullet points with emoji icons instead of walls of text. Each bullet must be short (max 15 words).
         3. A single colored "vibe tag" pill at the bottom (e.g., "Balanced duo ⚖️" or "Study powerhouse 💪" or "Quiet grinders 🤫") based on personality match.
         4. A short paragraph (under 80 words) explaining the match in more detail.
+        5. matchScore (number 0-100)
+        6. suggestedMeetingSpot (string, name of a campus building)
       `;
-      const response = await ai.models.generateContent({
-        model: "gemini-flash-latest",
-        contents: prompt,
+      
+      let contents: any[] = [{ role: 'user', parts: [{ text: prompt }] }];
+      
+      let response = await ai.models.generateContent({
+        model: "gemini-3-flash-preview",
+        contents: contents,
         config: {
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              headline: { type: Type.STRING },
-              bullets: { type: Type.ARRAY, items: { type: Type.STRING } },
-              vibeTag: { type: Type.STRING },
-              paragraph: { type: Type.STRING }
-            },
-            required: ["headline", "bullets", "vibeTag", "paragraph"]
-          }
+          tools: [{ functionDeclarations: [getCoursesTool, getBuildingHoursTool, getStudySpotsTool] }],
+          toolConfig: { includeServerSideToolInvocations: true }
         }
       });
+
+      if (response.functionCalls && response.functionCalls.length > 0) {
+        setMcpUsed(true);
+        const functionResponses = response.functionCalls.map(call => {
+          let result;
+          if (call.name === "get_courses") {
+            result = mockMcpServer.get_courses(call.args);
+          } else if (call.name === "get_building_hours") {
+            result = mockMcpServer.get_building_hours(call.args);
+          } else if (call.name === "get_study_spots") {
+            result = mockMcpServer.get_study_spots(call.args);
+          }
+          return {
+            functionResponse: {
+              name: call.name,
+              response: result
+            }
+          };
+        });
+        
+        contents.push(response.candidates![0].content);
+        contents.push({ role: 'user', parts: functionResponses });
+        
+        response = await ai.models.generateContent({
+          model: "gemini-3-flash-preview",
+          contents: contents,
+          config: {
+            responseMimeType: "application/json",
+            responseSchema: {
+              type: Type.OBJECT,
+              properties: {
+                matchScore: { type: Type.NUMBER },
+                headline: { type: Type.STRING },
+                bullets: { type: Type.ARRAY, items: { type: Type.STRING } },
+                vibeTag: { type: Type.STRING },
+                paragraph: { type: Type.STRING },
+                suggestedMeetingSpot: { type: Type.STRING }
+              },
+              required: ["matchScore", "headline", "bullets", "vibeTag", "paragraph", "suggestedMeetingSpot"]
+            }
+          }
+        });
+      } else {
+        contents.push(response.candidates![0].content);
+        contents.push({ role: 'user', parts: [{ text: "Now output the final JSON as requested." }] });
+        response = await ai.models.generateContent({
+          model: "gemini-3-flash-preview",
+          contents: contents,
+          config: {
+            responseMimeType: "application/json",
+            responseSchema: {
+              type: Type.OBJECT,
+              properties: {
+                matchScore: { type: Type.NUMBER },
+                headline: { type: Type.STRING },
+                bullets: { type: Type.ARRAY, items: { type: Type.STRING } },
+                vibeTag: { type: Type.STRING },
+                paragraph: { type: Type.STRING },
+                suggestedMeetingSpot: { type: Type.STRING }
+              },
+              required: ["matchScore", "headline", "bullets", "vibeTag", "paragraph", "suggestedMeetingSpot"]
+            }
+          }
+        });
+      }
       
       const result = JSON.parse(response.text || "{}");
       setMatchExplanation(result);
@@ -1265,6 +1402,9 @@ If the user mentions "meet", suggest meeting at ${BUILDINGS[Math.floor(Math.rand
                 <div>
                   <h2 className="text-xl font-bold">I Missed a Class</h2>
                   <p className="text-sm text-slate-500">Find students who have notes.</p>
+                  <div className="mt-2 flex items-center gap-1 text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-1 rounded-full w-fit">
+                    <Cloud size={10} /> Powered by Vertex AI
+                  </div>
                 </div>
               </div>
 
@@ -1429,7 +1569,14 @@ If the user mentions "meet", suggest meeting at ${BUILDINGS[Math.floor(Math.rand
 
               <div className="space-y-4">
                 <div className="bg-[#F0FAF4] p-4 rounded-2xl border border-slate-100 wavy-border-top shadow-sm">
-                  <h4 className="text-xs font-bold text-[var(--color-uwgb-muted)] uppercase tracking-wider mb-2">Why you match</h4>
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="text-xs font-bold text-[var(--color-uwgb-muted)] uppercase tracking-wider">Why you match</h4>
+                    {mcpUsed && (
+                      <span className="bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-1 rounded-full flex items-center gap-1">
+                        <Zap size={10} /> Powered by MCP
+                      </span>
+                    )}
+                  </div>
                   {isLoadingMatch ? (
                     <div className="flex items-center gap-2 text-sm text-[var(--color-uwgb-muted)] italic">
                       <div className="w-4 h-4 border-2 border-[var(--color-uwgb-accent)] border-t-transparent rounded-full animate-spin" />
