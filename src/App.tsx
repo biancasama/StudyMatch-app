@@ -29,10 +29,14 @@ import { GoogleGenAI, Type } from "@google/genai";
 
 type Personality = "introvert" | "ambivert" | "extrovert";
 type LearningStyle = "visual" | "auditory" | "reading/writing" | "kinesthetic";
+type Gender = 'male' | 'female' | 'non-binary';
+type HairStyle = 'long-straight' | 'long-wavy' | 'medium-bob' | 'bun' | 'afro-puffs' | 'short-fade' | 'short-curly' | 'buzzcut' | 'medium-messy';
 
 interface AvatarAppearance {
+  gender: Gender;
   skinTone: string;
   hairColor: string;
+  hairStyle: HairStyle;
   outfitColor: string;
 }
 
@@ -58,6 +62,7 @@ interface UserProfile {
   learningStyle: LearningStyle;
   availability: string;
   appearance: AvatarAppearance;
+  bio?: string;
 }
 
 // --- Constants ---
@@ -83,7 +88,7 @@ const PRELOADED_STUDENTS: Student[] = [
     learningStyle: "visual",
     availability: "Mon/Wed Afternoons",
     avatarColor: "#FF6B6B",
-    appearance: { skinTone: "#f0b896", hairColor: "#b55239", outfitColor: "#FF6B6B" },
+    appearance: { gender: "female", skinTone: "#f0b896", hairColor: "#b55239", hairStyle: "long-straight", outfitColor: "#FF6B6B" },
     initialX: 20,
     initialY: 30,
   },
@@ -96,7 +101,7 @@ const PRELOADED_STUDENTS: Student[] = [
     learningStyle: "reading/writing",
     availability: "Tue/Thu Mornings",
     avatarColor: "#4ECDC4",
-    appearance: { skinTone: "#8d5524", hairColor: "#000000", outfitColor: "#4ECDC4" },
+    appearance: { gender: "male", skinTone: "#8d5524", hairColor: "#000000", hairStyle: "short-fade", outfitColor: "#4ECDC4" },
     initialX: 70,
     initialY: 20,
   },
@@ -109,20 +114,20 @@ const PRELOADED_STUDENTS: Student[] = [
     learningStyle: "kinesthetic",
     availability: "Weekends",
     avatarColor: "#FFE66D",
-    appearance: { skinTone: "#fadcbc", hairColor: "#e6ce94", outfitColor: "#FFE66D" },
+    appearance: { gender: "male", skinTone: "#fadcbc", hairColor: "#e6ce94", hairStyle: "short-curly", outfitColor: "#FFE66D" },
     initialX: 40,
     initialY: 60,
   },
   {
     id: "4",
-    name: "Taylor",
+    name: "Morgan",
     courses: ["Digital Marketing", "Creative Writing"],
     notesAvailable: ["Creative Writing"],
     personality: "extrovert",
     learningStyle: "auditory",
     availability: "Evenings",
     avatarColor: "#1A535C",
-    appearance: { skinTone: "#c68642", hairColor: "#4a4a4a", outfitColor: "#1A535C" },
+    appearance: { gender: "non-binary", skinTone: "#c68642", hairColor: "#9333ea", hairStyle: "long-wavy", outfitColor: "#f97316" },
     initialX: 80,
     initialY: 70,
   },
@@ -135,7 +140,7 @@ const PRELOADED_STUDENTS: Student[] = [
     learningStyle: "visual",
     availability: "Friday All Day",
     avatarColor: "#F7FFF7",
-    appearance: { skinTone: "#3d2c23", hairColor: "#000000", outfitColor: "#9333ea" },
+    appearance: { gender: "female", skinTone: "#3d2c23", hairColor: "#000000", hairStyle: "afro-puffs", outfitColor: "#9333ea" },
     initialX: 10,
     initialY: 80,
   },
@@ -208,11 +213,48 @@ const COURSE_COLORS: Record<string, string> = {
 
 const BitmojiAvatar = ({ appearance, size = "normal" }: { appearance: AvatarAppearance, size?: "normal" | "large" }) => {
   const scale = size === "large" ? 1.5 : 1;
+  const isMale = appearance.gender === 'male';
+  const isFemale = appearance.gender === 'female';
+  const isNonBinary = appearance.gender === 'non-binary';
+
+  const shoulderWidth = isMale ? 36 : isFemale ? 26 : 30; // Base 30, male +6, female -4
+  const eyebrowWidth = isMale ? "3" : "2";
+  const smileArc = isMale ? "Q 50 102 65 82" : "Q 50 98 65 82";
+
   return (
     <svg width={45 * scale} height={90 * scale} viewBox="0 0 100 200" fill="none" xmlns="http://www.w3.org/2000/svg" className="drop-shadow-md">
       <g stroke="#111" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round">
         {/* Back Hair */}
-        <path d="M 20 60 C 10 30 90 30 80 60 C 85 80 90 100 80 110 C 65 100 35 100 20 110 C 10 100 15 80 20 60 Z" fill={appearance.hairColor} />
+        {appearance.hairStyle === 'long-straight' && (
+          <path d="M 20 60 C 10 30 90 30 80 60 C 85 100 90 140 80 150 C 65 140 35 140 20 150 C 10 140 15 100 20 60 Z" fill={appearance.hairColor} />
+        )}
+        {appearance.hairStyle === 'long-wavy' && (
+          <path d="M 20 60 C 10 30 90 30 80 60 C 85 80 95 100 80 120 C 90 130 85 150 75 160 C 50 150 25 160 20 120 C 5 100 15 80 20 60 Z" fill={appearance.hairColor} />
+        )}
+        {appearance.hairStyle === 'medium-bob' && (
+          <path d="M 20 60 C 10 30 90 30 80 60 C 85 80 90 100 80 110 C 65 100 35 100 20 110 C 10 100 15 80 20 60 Z" fill={appearance.hairColor} />
+        )}
+        {appearance.hairStyle === 'bun' && (
+          <circle cx="50" cy="15" r="15" fill={appearance.hairColor} />
+        )}
+        {appearance.hairStyle === 'afro-puffs' && (
+          <>
+            <circle cx="15" cy="30" r="18" fill={appearance.hairColor} />
+            <circle cx="85" cy="30" r="18" fill={appearance.hairColor} />
+          </>
+        )}
+        {appearance.hairStyle === 'short-fade' && (
+          <path d="M 20 60 C 10 30 90 30 80 60 Z" fill={appearance.hairColor} />
+        )}
+        {appearance.hairStyle === 'short-curly' && (
+          <path d="M 18 55 C 10 25 90 25 82 55 C 85 45 95 35 80 25 C 60 15 40 15 20 25 C 5 35 15 45 18 55 Z" fill={appearance.hairColor} />
+        )}
+        {appearance.hairStyle === 'buzzcut' && (
+          <path d="M 22 55 C 20 35 80 35 78 55 Z" fill={appearance.hairColor} />
+        )}
+        {appearance.hairStyle === 'medium-messy' && (
+          <path d="M 15 60 C 5 20 95 20 85 60 C 90 40 70 20 50 25 C 30 20 10 40 15 60 Z" fill={appearance.hairColor} />
+        )}
 
         {/* Legs */}
         <path d="M 40 140 L 35 185 L 48 185 L 50 140 Z" fill="#0f172a" />
@@ -226,7 +268,7 @@ const BitmojiAvatar = ({ appearance, size = "normal" }: { appearance: AvatarAppe
         <path d="M 72 188 L 58 188" stroke="#cbd5e1" strokeWidth="2" />
 
         {/* Torso / Hoodie */}
-        <path d="M 30 100 C 10 110 10 135 18 150 L 35 135 L 35 150 C 45 155 55 155 65 150 L 65 135 L 82 150 C 90 135 90 110 70 100 C 60 105 40 105 30 100 Z" fill={appearance.outfitColor} />
+        <path d={`M ${50 - shoulderWidth} 100 C ${50 - shoulderWidth - 20} 110 10 135 18 150 L 35 135 L 35 150 C 45 155 55 155 65 150 L 65 135 L 82 150 C 90 135 ${50 + shoulderWidth + 20} 110 ${50 + shoulderWidth} 100 C 60 105 40 105 ${50 - shoulderWidth} 100 Z`} fill={appearance.outfitColor} />
         
         {/* Hoodie Pocket */}
         <path d="M 35 130 L 65 130 L 70 145 L 50 150 L 30 145 Z" fill="#000" fillOpacity="0.1" stroke="none" />
@@ -246,8 +288,10 @@ const BitmojiAvatar = ({ appearance, size = "normal" }: { appearance: AvatarAppe
         {/* Head/Face */}
         <path d="M 20 55 C 20 10 80 10 80 55 C 80 95 65 105 50 105 C 35 105 20 95 20 55 Z" fill={appearance.skinTone} />
 
-        {/* Front Hair Swoop */}
-        <path d="M 18 50 C 30 15 70 15 82 50 C 70 30 55 25 50 30 C 45 25 30 30 18 50 Z" fill={appearance.hairColor} />
+        {/* Front Hair Swoop (only for some styles) */}
+        {['long-straight', 'medium-bob', 'short-fade', 'medium-messy'].includes(appearance.hairStyle) && (
+          <path d="M 18 50 C 30 15 70 15 82 50 C 70 30 55 25 50 30 C 45 25 30 30 18 50 Z" fill={appearance.hairColor} />
+        )}
       </g>
 
       {/* Face Details */}
@@ -261,20 +305,32 @@ const BitmojiAvatar = ({ appearance, size = "normal" }: { appearance: AvatarAppe
         <circle cx="38" cy="58" r="1.5" fill="#fff" />
         <circle cx="64" cy="58" r="1.5" fill="#fff" />
 
+        {/* Eyelashes (Female only) */}
+        {isFemale && (
+          <>
+            <path d="M 25 55 L 20 50 M 28 52 L 24 46 M 32 50 L 30 44" stroke="#111" strokeWidth="2" strokeLinecap="round" />
+            <path d="M 75 55 L 80 50 M 72 52 L 76 46 M 68 50 L 70 44" stroke="#111" strokeWidth="2" strokeLinecap="round" />
+          </>
+        )}
+
         {/* Eyebrows */}
-        <path d="M 24 45 Q 35 38 45 46" stroke={appearance.hairColor} strokeWidth="4" fill="none" strokeLinecap="round" />
-        <path d="M 76 45 Q 65 38 55 46" stroke={appearance.hairColor} strokeWidth="4" fill="none" strokeLinecap="round" />
+        <path d="M 24 45 Q 35 38 45 46" stroke={appearance.hairColor} strokeWidth={eyebrowWidth} fill="none" strokeLinecap="round" />
+        <path d="M 76 45 Q 65 38 55 46" stroke={appearance.hairColor} strokeWidth={eyebrowWidth} fill="none" strokeLinecap="round" />
 
         {/* Nose */}
         <path d="M 50 68 Q 54 74 48 76" stroke="#000" strokeOpacity="0.3" strokeWidth="2.5" fill="none" strokeLinecap="round" />
 
         {/* Mouth (Big Smile with teeth) */}
-        <path d="M 35 82 Q 50 98 65 82 Q 50 90 35 82 Z" fill="#fff" stroke="#111" strokeWidth="2" strokeLinejoin="round" />
+        <path d={`M 35 82 ${smileArc} Z`} fill="#fff" stroke="#111" strokeWidth="2" strokeLinejoin="round" />
         <path d="M 38 84 Q 50 92 62 84" stroke="#111" strokeWidth="1" fill="none" />
         
-        {/* Cheeks */}
-        <ellipse cx="26" cy="72" rx="5" ry="3" fill="#ff0000" fillOpacity="0.2" />
-        <ellipse cx="74" cy="72" rx="5" ry="3" fill="#ff0000" fillOpacity="0.2" />
+        {/* Cheeks (Female only) */}
+        {isFemale && (
+          <>
+            <ellipse cx="26" cy="72" rx="6" ry="4" fill="#ff69b4" fillOpacity="0.4" />
+            <ellipse cx="74" cy="72" rx="6" ry="4" fill="#ff69b4" fillOpacity="0.4" />
+          </>
+        )}
       </g>
     </svg>
   );
@@ -395,7 +451,7 @@ export default function App() {
       personality: "ambivert",
       learningStyle: "visual",
       availability: "Mon-Fri Afternoons",
-      appearance: { skinTone: "#fadcbc", hairColor: "#4a4a4a", outfitColor: "#3b82f6" }
+      appearance: { gender: "female", skinTone: "#fadcbc", hairColor: "#4a4a4a", hairStyle: "long-wavy", outfitColor: "#3b82f6" }
     };
   });
   const [connectedStudents, setConnectedStudents] = useState<string[]>(() => {
@@ -425,15 +481,95 @@ export default function App() {
   const [missedCourse, setMissedCourse] = useState<string | null>(null);
   const [showFullExplanation, setShowFullExplanation] = useState(false);
 
+  // Match Celebration State
+  const [isCelebrating, setIsCelebrating] = useState(false);
+  const [celebrationData, setCelebrationData] = useState<{student: Student, matchScore: number, comment: string} | null>(null);
+
   // Chat State
   const [chats, setChats] = useState<Record<string, { sender: string, text: string, timestamp: Date }[]>>({});
   const [activeChatStudent, setActiveChatStudent] = useState<Student | null>(null);
   const [newMessage, setNewMessage] = useState("");
+  const [isTyping, setIsTyping] = useState<Record<string, boolean>>({});
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   const [draftedNoteRequest, setDraftedNoteRequest] = useState<string | null>(null);
   const [isDraftingNotes, setIsDraftingNotes] = useState(false);
   const [isGeneratingBio, setIsGeneratingBio] = useState(false);
+
+  const sendMessage = async () => {
+    if (!newMessage.trim() || !activeChatStudent) return;
+
+    const studentId = activeChatStudent.id;
+    const messageText = newMessage.trim();
+    
+    // Add user message
+    setChats(prev => ({
+      ...prev,
+      [studentId]: [...(prev[studentId] || []), { sender: "user", text: messageText, timestamp: new Date() }]
+    }));
+    setNewMessage("");
+    setIsTyping(prev => ({ ...prev, [studentId]: true }));
+
+    try {
+      const sharedCourses = userProfile.courses.filter(c => activeChatStudent.courses.includes(c));
+      const sharedCourseStr = sharedCourses.length > 0 ? sharedCourses.join(" and ") : "some classes";
+      
+      const personas: Record<string, string> = {
+        "Casey": "chill, uses 'lol' and 'ngl', ambivert, visual learner, always studying last minute",
+        "Alex": "enthusiastic, lots of exclamation marks, extrovert, loves group sessions",
+        "Riley": "introverted, short replies, super organized, sends bullet points",
+        "Jordan": "sarcastic but friendly, asks lots of questions back",
+        "Morgan": "very positive, uses emojis, suggests meeting at the library always"
+      };
+
+      const persona = personas[activeChatStudent.name] || "friendly student";
+
+      const systemPrompt = `You are ${activeChatStudent.name}, a UWGB student. You and the user share ${sharedCourseStr}. 
+Stay in character as a real student — casual, short messages (1-3 sentences max), 
+never break character, never say you're an AI. Reply like a real Gen Z student 
+texting about studying. Current context: you both matched on StudyMatch app.
+Your personality: ${persona}.
+If the user mentions "notes", either offer to share or ask which class.
+If the user mentions "meet", suggest meeting at ${BUILDINGS[Math.floor(Math.random() * BUILDINGS.length)].name.split(' (')[0]}.`;
+
+      const chatHistory = (chats[studentId] || []).map(msg => 
+        `${msg.sender === 'user' ? 'User' : activeChatStudent.name}: ${msg.text}`
+      ).join('\n');
+
+      const prompt = `${systemPrompt}\n\nChat History:\n${chatHistory}\nUser: ${messageText}\n${activeChatStudent.name}:`;
+
+      const response = await ai.models.generateContentStream({
+        model: "gemini-3-flash-preview",
+        contents: prompt,
+      });
+
+      let fullResponse = "";
+      // Add empty message first
+      setChats(prev => ({
+        ...prev,
+        [studentId]: [...(prev[studentId] || []), { sender: "student", text: "", timestamp: new Date() }]
+      }));
+
+      for await (const chunk of response) {
+        fullResponse += chunk.text;
+        setChats(prev => {
+          const newChats = { ...prev };
+          const studentChats = [...(newChats[studentId] || [])];
+          studentChats[studentChats.length - 1] = { ...studentChats[studentChats.length - 1], text: fullResponse };
+          newChats[studentId] = studentChats;
+          return newChats;
+        });
+      }
+    } catch (error) {
+      console.error("Chat error:", error);
+      setChats(prev => ({
+        ...prev,
+        [studentId]: [...(prev[studentId] || []), { sender: "student", text: "Oops, my connection dropped! 😅", timestamp: new Date() }]
+      }));
+    } finally {
+      setIsTyping(prev => ({ ...prev, [studentId]: false }));
+    }
+  };
 
   const draftNotesRequest = async () => {
     if (!selectedStudent || !missedCourse) return;
@@ -563,43 +699,57 @@ export default function App() {
 
   const [meetingSpot, setMeetingSpot] = useState<typeof BUILDINGS[0] | null>(null);
 
-  const handleStudentClick = (student: Student) => {
+  const openChat = (student: Student) => {
+    setActiveChatStudent(student);
+    setActiveTab("messages");
+    setSelectedStudent(null);
+  };
+
+  const handleStudentClick = async (student: Student) => {
     setSelectedBuilding(null);
-    setSelectedStudent(student);
     setDraftedNoteRequest(null);
-    getMatchExplanation(student);
-    // Pick a random building for the meeting spot as fallback
-    const randomBuilding = BUILDINGS[Math.floor(Math.random() * BUILDINGS.length)];
-    setMeetingSpot(randomBuilding);
+    
+    const score = matchScores[student.id] || getHeuristicScore(student);
+    
+    if (score > 70 && !connectedStudents.includes(student.id)) {
+      setIsCelebrating(true);
+      try {
+        const prompt = `Write a fun, Gen Z style one-liner (max 10 words) about why ${userProfile.name} and ${student.name} are a perfect study match based on their shared courses or personality.`;
+        const response = await ai.models.generateContent({
+          model: "gemini-3-flash-preview",
+          contents: prompt,
+        });
+        setCelebrationData({
+          student,
+          matchScore: score,
+          comment: response.text?.trim() || "You two are a perfect match! 🎯"
+        });
+      } catch (e) {
+        setCelebrationData({
+          student,
+          matchScore: score,
+          comment: "You two are a perfect match! 🎯"
+        });
+      }
+      
+      setTimeout(() => {
+        setIsCelebrating(false);
+        setSelectedStudent(student);
+        getMatchExplanation(student);
+        const randomBuilding = BUILDINGS[Math.floor(Math.random() * BUILDINGS.length)];
+        setMeetingSpot(randomBuilding);
+      }, 3000);
+    } else {
+      setSelectedStudent(student);
+      getMatchExplanation(student);
+      const randomBuilding = BUILDINGS[Math.floor(Math.random() * BUILDINGS.length)];
+      setMeetingSpot(randomBuilding);
+    }
   };
 
   const handleBuildingClick = (building: typeof BUILDINGS[0]) => {
     setSelectedStudent(null);
     setSelectedBuilding(building);
-  };
-
-  const sendMessage = (studentId: string) => {
-    if (!newMessage.trim()) return;
-    const msg = { sender: userProfile.name, text: newMessage, timestamp: new Date() };
-    setChats(prev => ({
-      ...prev,
-      [studentId]: [...(prev[studentId] || []), msg]
-    }));
-    setNewMessage("");
-  };
-
-  const openChat = (student: Student) => {
-    if (!chats[student.id]) {
-      const greeting = { 
-        sender: student.name, 
-        text: `Hey! I saw we're both in ${student.courses.find(c => userProfile.courses.includes(c)) || "the same class"}. Want to study together?`, 
-        timestamp: new Date() 
-      };
-      setChats(prev => ({ ...prev, [student.id]: [greeting] }));
-    }
-    setActiveChatStudent(student);
-    setActiveTab("messages");
-    setSelectedStudent(null);
   };
 
   return (
@@ -789,15 +939,24 @@ export default function App() {
                       <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Chat started with {activeChatStudent.name}</p>
                     </div>
                     {(chats[activeChatStudent.id] || []).map((msg, i) => (
-                      <div key={i} className={`flex ${msg.sender === userProfile.name ? 'justify-end' : 'justify-start'}`}>
-                        <div className={`max-w-[80%] p-3 rounded-2xl text-sm ${msg.sender === userProfile.name ? 'bg-[var(--color-uwgb-accent)] text-white rounded-tr-none' : 'bg-white border border-slate-200 text-slate-700 rounded-tl-none'}`}>
+                      <div key={i} className={`flex ${msg.sender === "user" ? 'justify-end' : 'justify-start'}`}>
+                        <div className={`max-w-[80%] p-3 rounded-2xl text-sm ${msg.sender === "user" ? 'bg-[var(--color-uwgb-accent)] text-white rounded-tr-none' : 'bg-white border border-slate-200 text-slate-700 rounded-tl-none'}`}>
                           {msg.text}
-                          <div className={`text-[8px] mt-1 opacity-50 ${msg.sender === userProfile.name ? 'text-white' : 'text-slate-400'}`}>
+                          <div className={`text-[8px] mt-1 opacity-50 ${msg.sender === "user" ? 'text-white' : 'text-slate-400'}`}>
                             {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </div>
                         </div>
                       </div>
                     ))}
+                    {isTyping[activeChatStudent.id] && (
+                      <div className="flex justify-start">
+                        <div className="bg-white border border-slate-200 p-4 rounded-2xl rounded-tl-none flex gap-1">
+                          <div className="w-2 h-2 bg-slate-300 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                          <div className="w-2 h-2 bg-slate-300 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                          <div className="w-2 h-2 bg-slate-300 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+                        </div>
+                      </div>
+                    )}
                     <div ref={chatEndRef} />
                   </div>
 
@@ -808,12 +967,12 @@ export default function App() {
                         type="text" 
                         value={newMessage}
                         onChange={e => setNewMessage(e.target.value)}
-                        onKeyPress={e => e.key === 'Enter' && sendMessage(activeChatStudent.id)}
+                        onKeyPress={e => e.key === 'Enter' && sendMessage()}
                         placeholder="Type a message..."
                         className="flex-1 p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[var(--color-uwgb-accent)] transition-colors"
                       />
                       <button 
-                        onClick={() => sendMessage(activeChatStudent.id)}
+                        onClick={() => sendMessage()}
                         className="w-12 h-12 btn-primary flex items-center justify-center"
                       >
                         <Zap size={20} fill="currentColor" />
@@ -909,6 +1068,35 @@ export default function App() {
 
                   <div className="space-y-4">
                     <div>
+                      <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Gender</label>
+                      <div className="grid grid-cols-3 gap-2">
+                        {(['male', 'female', 'non-binary'] as Gender[]).map(gender => (
+                          <button
+                            key={gender}
+                            onClick={() => {
+                              const defaultHair: Record<Gender, HairStyle> = {
+                                'male': 'short-fade',
+                                'female': 'long-straight',
+                                'non-binary': 'medium-bob'
+                              };
+                              setUserProfile({
+                                ...userProfile, 
+                                appearance: {
+                                  ...userProfile.appearance, 
+                                  gender,
+                                  hairStyle: defaultHair[gender]
+                                }
+                              });
+                            }}
+                            className={`py-2 px-1 rounded-xl text-xs font-bold transition-colors capitalize ${userProfile.appearance.gender === gender ? 'bg-[var(--color-uwgb-accent)] text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                          >
+                            {gender.replace('-', ' ')}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
                       <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Skin Tone</label>
                       <div className="flex gap-2">
                         {["#fadcbc", "#f0b896", "#e09565", "#c68642", "#8d5524", "#3d2c23"].map(color => (
@@ -923,9 +1111,33 @@ export default function App() {
                     </div>
                     
                     <div>
+                      <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Hair Style</label>
+                      <div className="flex flex-wrap gap-2">
+                        {(() => {
+                          let styles: HairStyle[] = [];
+                          if (userProfile.appearance.gender === 'female') styles = ['long-straight', 'long-wavy', 'medium-bob', 'bun', 'afro-puffs'];
+                          if (userProfile.appearance.gender === 'male') styles = ['short-fade', 'short-curly', 'buzzcut', 'medium-messy', 'long-straight'];
+                          if (userProfile.appearance.gender === 'non-binary') styles = ['medium-bob', 'medium-messy', 'short-curly', 'long-wavy', 'afro-puffs'];
+                          
+                          return styles.map(style => (
+                            <button
+                              key={style}
+                              onClick={() => setUserProfile({...userProfile, appearance: {...userProfile.appearance, hairStyle: style}})}
+                              className={`w-12 h-12 rounded-xl border-2 transition-all flex items-center justify-center overflow-hidden bg-slate-50 ${userProfile.appearance.hairStyle === style ? 'border-[var(--color-uwgb-accent)] bg-green-50' : 'border-slate-200 hover:border-slate-300'}`}
+                            >
+                              <div className="scale-[0.4] origin-top -translate-y-4">
+                                <BitmojiAvatar appearance={{...userProfile.appearance, hairStyle: style}} />
+                              </div>
+                            </button>
+                          ));
+                        })()}
+                      </div>
+                    </div>
+
+                    <div>
                       <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Hair Color</label>
                       <div className="flex flex-wrap gap-2">
-                        {["#e6ce94", "#b55239", "#7a3b22", "#4a4a4a", "#000000", "#ef4444", "#22c55e", "#3b82f6"].map(color => (
+                        {["#e6ce94", "#b55239", "#7a3b22", "#4a4a4a", "#000000", "#ef4444", "#22c55e", "#3b82f6", "#9333ea"].map(color => (
                           <button
                             key={color}
                             onClick={() => setUserProfile({...userProfile, appearance: {...userProfile.appearance, hairColor: color}})}
@@ -939,7 +1151,7 @@ export default function App() {
                     <div>
                       <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Outfit Color</label>
                       <div className="flex gap-2">
-                        {["#3b82f6", "#ef4444", "#22c55e", "#eab308", "#a855f7", "#14b8a6"].map(color => (
+                        {["#3b82f6", "#ef4444", "#22c55e", "#eab308", "#a855f7", "#14b8a6", "#f97316"].map(color => (
                           <button
                             key={color}
                             onClick={() => setUserProfile({...userProfile, appearance: {...userProfile.appearance, outfitColor: color}})}
@@ -1078,9 +1290,113 @@ export default function App() {
           )}
         </AnimatePresence>
 
+        <AnimatePresence>
+          {isCelebrating && celebrationData && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 z-50 flex items-center justify-center overflow-hidden bg-black/80 backdrop-blur-sm"
+            >
+              {/* Screen Flash */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: [0, 0.8, 0] }}
+                transition={{ duration: 0.5, times: [0, 0.1, 1] }}
+                className="absolute inset-0 bg-green-400 mix-blend-overlay pointer-events-none"
+              />
+
+              {/* Confetti */}
+              <div className="absolute inset-0 pointer-events-none">
+                {Array.from({ length: 30 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="absolute left-1/2 top-1/2 w-3 h-3 rounded-sm"
+                    style={{
+                      backgroundColor: ['#3b82f6', '#ef4444', '#22c55e', '#eab308', '#a855f7'][Math.floor(Math.random() * 5)],
+                      animation: `confetti-burst 1s ease-out forwards`,
+                      animationDelay: `${Math.random() * 0.2}s`,
+                      transform: `rotate(${Math.random() * 360}deg)`,
+                      '--tx': `${(Math.random() - 0.5) * 300}px`,
+                      '--ty': `${(Math.random() - 0.5) * 300}px`,
+                    } as React.CSSProperties}
+                  />
+                ))}
+              </div>
+
+              <div className="relative flex flex-col items-center justify-center w-full h-full">
+                {/* Text Animation */}
+                <motion.div
+                  initial={{ scale: 0, y: -50 }}
+                  animate={{ scale: 1, y: 0 }}
+                  transition={{ type: "spring", bounce: 0.6, duration: 0.8 }}
+                  className="absolute top-1/4 text-center z-20"
+                >
+                  <h2 className="text-4xl font-black text-white drop-shadow-[0_4px_4px_rgba(0,0,0,0.5)] tracking-tight">
+                    IT'S A MATCH! 🎉
+                  </h2>
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.5 }}
+                    className="mt-4 bg-white/20 backdrop-blur-md px-6 py-3 rounded-2xl border border-white/30 max-w-[80%] mx-auto"
+                  >
+                    <p className="text-white font-bold text-lg leading-tight">
+                      {celebrationData.comment}
+                    </p>
+                  </motion.div>
+                </motion.div>
+
+                {/* Avatars */}
+                <div className="flex items-center justify-center gap-8 mt-20">
+                  <motion.div
+                    initial={{ x: -150, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1, y: [0, -20, 0] }}
+                    transition={{ 
+                      x: { type: "spring", stiffness: 100, damping: 15 },
+                      y: { repeat: Infinity, duration: 0.5, repeatType: "reverse" }
+                    }}
+                    className="relative"
+                  >
+                    <div className="scale-150">
+                      <BitmojiAvatar appearance={userProfile.appearance} />
+                    </div>
+                    {/* Raised Arm (Simplified representation) */}
+                    <motion.div 
+                      initial={{ rotate: 0 }}
+                      animate={{ rotate: 45 }}
+                      className="absolute top-1/2 -right-4 w-8 h-3 bg-[var(--color-uwgb-accent)] rounded-full origin-left"
+                    />
+                  </motion.div>
+
+                  <motion.div
+                    initial={{ x: 150, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1, y: [0, -20, 0] }}
+                    transition={{ 
+                      x: { type: "spring", stiffness: 100, damping: 15 },
+                      y: { repeat: Infinity, duration: 0.5, repeatType: "reverse", delay: 0.1 }
+                    }}
+                    className="relative"
+                  >
+                    <div className="scale-150 -scale-x-150">
+                      <BitmojiAvatar appearance={celebrationData.student.appearance} />
+                    </div>
+                    {/* Raised Arm */}
+                    <motion.div 
+                      initial={{ rotate: 0 }}
+                      animate={{ rotate: -45 }}
+                      className="absolute top-1/2 -left-4 w-8 h-3 bg-blue-500 rounded-full origin-right"
+                    />
+                  </motion.div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Profile Card Overlay */}
         <AnimatePresence>
-          {selectedStudent && (
+          {selectedStudent && !isCelebrating && (
             <motion.div
               initial={{ y: "100%" }}
               animate={{ y: 0 }}
@@ -1319,6 +1635,30 @@ export default function App() {
           <span className="text-[10px] font-bold">Profile</span>
         </button>
       </nav>
+
+      {/* Roadmap Pitch Overlay */}
+      <AnimatePresence>
+        {activeTab === "profile" && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            className="fixed bottom-24 left-4 right-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white p-4 rounded-2xl shadow-xl z-50 border border-white/20"
+          >
+            <div className="flex items-start gap-3">
+              <div className="bg-white/20 p-2 rounded-xl shrink-0">
+                <Zap size={20} className="text-yellow-300" />
+              </div>
+              <div>
+                <h4 className="font-bold text-sm mb-1">Coming in v2: Google Veo</h4>
+                <p className="text-xs text-white/90 leading-relaxed">
+                  Imagine celebrating a 100% match with a personalized, AI-generated video of your avatars high-fiving on campus! Powered by Google Veo.
+                </p>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Mobile Viewport Constraint Indicator (only visible on large screens) */}
       <div className="hidden xl:block fixed top-4 right-4 bg-white/80 backdrop-blur p-2 rounded-lg border border-slate-200 text-[10px] text-slate-500">
