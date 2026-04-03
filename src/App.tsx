@@ -1061,7 +1061,6 @@ If the user mentions "meet", suggest meeting at ${BUILDINGS[Math.floor(Math.rand
                   </TransformComponent>
                 </TransformWrapper>
               </div>
-              <Chatbot />
             </motion.div>
           )}
 

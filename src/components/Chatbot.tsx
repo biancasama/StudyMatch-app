@@ -1,38 +1,49 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { MessageSquare, X, Send } from 'lucide-react';
-import { GoogleGenAI } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
+const ALEX_RESPONSES: Record<string, string> = {
+  "hey": "Hey!! So glad we matched 🙌 which class are you studying for?",
+  "hi": "Hey!! So glad we matched 🙌 which class are you studying for?",
+  "hello": "Hey!! So glad we matched 🙌 which class are you studying for?",
+  "notes": "omg yes I have notes for everything!! want me to share my gdrive folder?",
+  "meet": "YES let's meet!! Student union? I'm free most afternoons!",
+  "exam": "ugh exams 😭 we should definitely study together, I make great flashcards!",
+  "when": "I'm usually free after 3pm! what about you?",
+  "study": "I'm down to study! What are we tackling first?",
+  "coffee": "Coffee sounds amazing! ☕️",
+  "library": "Library is a bit quiet for me, but I'll go if you need to focus!",
+  "help": "I can try to help! What's confusing you?",
+  "thanks": "No problem!! Happy to help a study buddy!",
+  "bye": "See ya! Good luck with studying!",
+  "cool": "Right?! Let's crush this semester!",
+  "what": "What's up? Need help with something?"
+};
 
 export const Chatbot = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<{ role: 'user' | 'bot', text: string }[]>([]);
   const [input, setInput] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
 
-  const sendMessage = async () => {
+  const sendMessage = () => {
     if (!input.trim()) return;
     const userMessage = { role: 'user' as const, text: input };
     setMessages(prev => [...prev, userMessage]);
     setInput('');
-    setIsLoading(true);
 
-    try {
-      const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
-        contents: input,
-        config: {
-          systemInstruction: "You are a helpful study assistant for students. Help them explain concepts or suggest study strategies for specific courses.",
-        },
-      });
-      setMessages(prev => [...prev, { role: 'bot', text: response.text || "Sorry, I couldn't generate a response." }]);
-    } catch (error) {
-      console.error(error);
-      setMessages(prev => [...prev, { role: 'bot', text: "Sorry, something went wrong." }]);
-    } finally {
-      setIsLoading(false);
+    const lowerInput = input.toLowerCase();
+    let botResponse = "I'm not sure how to respond to that, but I'm excited to study with you!";
+    
+    for (const [keyword, response] of Object.entries(ALEX_RESPONSES)) {
+      if (lowerInput.includes(keyword)) {
+        botResponse = response;
+        break;
+      }
     }
+
+    setTimeout(() => {
+      setMessages(prev => [...prev, { role: 'bot', text: botResponse }]);
+    }, 500);
   };
 
   return (
@@ -62,7 +73,6 @@ export const Chatbot = () => {
                   {m.text}
                 </div>
               ))}
-              {isLoading && <div className="p-2 rounded text-sm bg-slate-100">Thinking...</div>}
             </div>
             <div className="p-3 border-t flex gap-2">
               <input

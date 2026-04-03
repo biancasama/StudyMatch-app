@@ -15,6 +15,18 @@ StudyMatch is an interactive, Gen Z-focused platform designed to help University
 
 This project was built entirely by a solo developer, leveraging the power of Google's AI tools and platforms to rapidly prototype and deploy a functional, AI-integrated application.
 
+## 📸 Screenshots
+
+<div align="center">
+  <img src="assets/map-view.png" alt="Interactive Campus Map" width="45%"/>
+  <img src="assets/match-details.png" alt="AI-Powered Match Details" width="45%"/>
+</div>
+<br />
+<div align="center">
+  <img src="assets/chat-interface.png" alt="Real-time Chat" width="45%"/>
+  <img src="assets/match-celebration.png" alt="Match Celebration Animation" width="45%"/>
+</div>
+
 ## 🚀 Features
 
 *   **AI-Powered Matching:** Uses Google Gemini to analyze student profiles and suggest the best study partners based on shared courses, personality, and learning styles.
