@@ -68,4 +68,4 @@ This project was built entirely by a solo developer, leveraging the power of Goo
 
 ## 📄 License
 
-This project is licensed under the Apache License 2.0.
+This project is proprietary and all rights are reserved. Please refer to the [LICENSE](LICENSE) file for details regarding usage, attribution, and commercialization.
