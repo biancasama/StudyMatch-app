@@ -5,8 +5,9 @@ StudyMatch is an interactive, Gen Z-focused platform designed to help University
 **Built as a solo project for the [Build with AI 2026](https://gdg.community.dev/events/details/google-gdg-on-campus-at-uw-green-bay-presents-build-with-ai-2026/) hackathon hosted by GDG on Campus at UW-Green Bay.**
 
 <div align="center">
-  <img src="path/to/build-with-ai-logo.png" alt="Build with AI Logo" width="200"/>
-  <img src="path/to/uwgb-logo.png" alt="UWGB Logo" width="200"/>
+  <!-- Replace the URLs below with the direct links to your hosted images -->
+  <img src="https://via.placeholder.com/200x100?text=Build+with+AI+Logo" alt="Build with AI Logo" width="200"/>
+  <img src="https://via.placeholder.com/200x100?text=UWGB+Logo" alt="UWGB Logo" width="200"/>
 </div>
 
 This project was built entirely by a solo developer, leveraging the power of Google's AI tools and platforms to rapidly prototype and deploy a functional, AI-integrated application.
