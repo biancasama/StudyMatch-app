@@ -209,33 +209,73 @@ const COURSE_COLORS: Record<string, string> = {
 const BitmojiAvatar = ({ appearance, size = "normal" }: { appearance: AvatarAppearance, size?: "normal" | "large" }) => {
   const scale = size === "large" ? 1.5 : 1;
   return (
-    <svg width={40 * scale} height={70 * scale} viewBox="0 0 40 70" fill="none" xmlns="http://www.w3.org/2000/svg" className="drop-shadow-md">
-      {/* Legs */}
-      <path d="M14 50 L14 65 L10 65 L10 50 Z" fill="#1e293b" />
-      <path d="M26 50 L26 65 L30 65 L30 50 Z" fill="#1e293b" />
-      {/* Shoes */}
-      <ellipse cx="12" cy="66" rx="4" ry="2" fill="#0f172a" />
-      <ellipse cx="28" cy="66" rx="4" ry="2" fill="#0f172a" />
-      
-      {/* Body/Outfit */}
-      <path d="M10 30 C10 25 30 25 30 30 L32 50 C32 52 8 52 8 50 Z" fill={appearance.outfitColor} />
-      {/* Arms */}
-      <path d="M10 30 C5 35 5 45 8 48" stroke={appearance.outfitColor} strokeWidth="4" strokeLinecap="round" />
-      <path d="M30 30 C35 35 35 45 32 48" stroke={appearance.outfitColor} strokeWidth="4" strokeLinecap="round" />
-      {/* Hands */}
-      <circle cx="8" cy="48" r="3" fill={appearance.skinTone} />
-      <circle cx="32" cy="48" r="3" fill={appearance.skinTone} />
+    <svg width={45 * scale} height={90 * scale} viewBox="0 0 100 200" fill="none" xmlns="http://www.w3.org/2000/svg" className="drop-shadow-md">
+      <g stroke="#111" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round">
+        {/* Back Hair */}
+        <path d="M 20 60 C 10 30 90 30 80 60 C 85 80 90 100 80 110 C 65 100 35 100 20 110 C 10 100 15 80 20 60 Z" fill={appearance.hairColor} />
 
-      {/* Head */}
-      <circle cx="20" cy="18" r="14" fill={appearance.skinTone} />
-      {/* Hair */}
-      <path d="M4 18 C4 5 36 5 36 18 C36 10 20 2 4 18 Z" fill={appearance.hairColor} />
-      
-      {/* Eyes */}
-      <circle cx="15" cy="16" r="2" fill="#000" />
-      <circle cx="25" cy="16" r="2" fill="#000" />
-      {/* Smile */}
-      <path d="M15 22 Q20 26 25 22" stroke="#000" strokeWidth="1.5" strokeLinecap="round" fill="none" />
+        {/* Legs */}
+        <path d="M 40 140 L 35 185 L 48 185 L 50 140 Z" fill="#0f172a" />
+        <path d="M 60 140 L 65 185 L 52 185 L 50 140 Z" fill="#0f172a" />
+
+        {/* Shoes */}
+        <path d="M 35 185 L 48 185 L 48 190 C 48 196 22 196 22 190 C 22 185 30 185 35 185 Z" fill="#fff" />
+        <path d="M 65 185 L 52 185 L 52 190 C 52 196 78 196 78 190 C 78 185 70 185 65 185 Z" fill="#fff" />
+        {/* Shoe details (stripes) */}
+        <path d="M 28 188 L 42 188" stroke="#cbd5e1" strokeWidth="2" />
+        <path d="M 72 188 L 58 188" stroke="#cbd5e1" strokeWidth="2" />
+
+        {/* Torso / Hoodie */}
+        <path d="M 30 100 C 10 110 10 135 18 150 L 35 135 L 35 150 C 45 155 55 155 65 150 L 65 135 L 82 150 C 90 135 90 110 70 100 C 60 105 40 105 30 100 Z" fill={appearance.outfitColor} />
+        
+        {/* Hoodie Pocket */}
+        <path d="M 35 130 L 65 130 L 70 145 L 50 150 L 30 145 Z" fill="#000" fillOpacity="0.1" stroke="none" />
+        <path d="M 35 130 L 65 130 L 70 145 L 50 150 L 30 145 Z" fill="none" strokeOpacity="0.3" />
+
+        {/* Hoodie Strings */}
+        <path d="M 45 105 L 45 120" stroke="#fff" strokeWidth="2" />
+        <path d="M 55 105 L 55 120" stroke="#fff" strokeWidth="2" />
+
+        {/* Hands */}
+        <circle cx="16" cy="152" r="7" fill={appearance.skinTone} />
+        <circle cx="84" cy="152" r="7" fill={appearance.skinTone} />
+
+        {/* Neck */}
+        <path d="M 42 85 L 42 105 L 58 105 L 58 85 Z" fill={appearance.skinTone} />
+
+        {/* Head/Face */}
+        <path d="M 20 55 C 20 10 80 10 80 55 C 80 95 65 105 50 105 C 35 105 20 95 20 55 Z" fill={appearance.skinTone} />
+
+        {/* Front Hair Swoop */}
+        <path d="M 18 50 C 30 15 70 15 82 50 C 70 30 55 25 50 30 C 45 25 30 30 18 50 Z" fill={appearance.hairColor} />
+      </g>
+
+      {/* Face Details */}
+      <g>
+        {/* Eyes */}
+        <ellipse cx="35" cy="60" rx="8" ry="11" fill="#fff" stroke="#111" strokeWidth="2" />
+        <ellipse cx="65" cy="60" rx="8" ry="11" fill="#fff" stroke="#111" strokeWidth="2" />
+        <circle cx="37" cy="60" r="4" fill="#111" />
+        <circle cx="63" cy="60" r="4" fill="#111" />
+        {/* Eye highlights */}
+        <circle cx="38" cy="58" r="1.5" fill="#fff" />
+        <circle cx="64" cy="58" r="1.5" fill="#fff" />
+
+        {/* Eyebrows */}
+        <path d="M 24 45 Q 35 38 45 46" stroke={appearance.hairColor} strokeWidth="4" fill="none" strokeLinecap="round" />
+        <path d="M 76 45 Q 65 38 55 46" stroke={appearance.hairColor} strokeWidth="4" fill="none" strokeLinecap="round" />
+
+        {/* Nose */}
+        <path d="M 50 68 Q 54 74 48 76" stroke="#000" strokeOpacity="0.3" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+
+        {/* Mouth (Big Smile with teeth) */}
+        <path d="M 35 82 Q 50 98 65 82 Q 50 90 35 82 Z" fill="#fff" stroke="#111" strokeWidth="2" strokeLinejoin="round" />
+        <path d="M 38 84 Q 50 92 62 84" stroke="#111" strokeWidth="1" fill="none" />
+        
+        {/* Cheeks */}
+        <ellipse cx="26" cy="72" rx="5" ry="3" fill="#ff0000" fillOpacity="0.2" />
+        <ellipse cx="74" cy="72" rx="5" ry="3" fill="#ff0000" fillOpacity="0.2" />
+      </g>
     </svg>
   );
 };
@@ -584,7 +624,7 @@ export default function App() {
                       <ChevronLeft size={24} />
                     </button>
                     <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center overflow-hidden shadow-inner">
-                      <div className="scale-110 translate-y-2">
+                      <div className="scale-110 translate-y-1">
                         <BitmojiAvatar appearance={activeChatStudent.appearance} />
                       </div>
                     </div>
@@ -648,7 +688,7 @@ export default function App() {
                             className="w-full flex items-center gap-4 p-4 bg-slate-50 border border-slate-200 rounded-2xl hover:border-green-300 transition-colors text-left"
                           >
                             <div className="w-12 h-12 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center overflow-hidden shadow-inner shrink-0">
-                              <div className="scale-125 translate-y-3">
+                              <div className="scale-125 translate-y-1">
                                 <BitmojiAvatar appearance={student.appearance} />
                               </div>
                             </div>
@@ -708,7 +748,7 @@ export default function App() {
                   
                   <div className="flex flex-col items-center mb-6">
                     <div className="w-24 h-24 bg-white rounded-full border-4 border-slate-100 shadow-sm flex items-center justify-center overflow-hidden mb-2">
-                      <div className="scale-150 translate-y-4">
+                      <div className="scale-150 translate-y-1">
                         <BitmojiAvatar appearance={userProfile.appearance} />
                       </div>
                     </div>
@@ -897,7 +937,7 @@ export default function App() {
               <div className="flex justify-between items-start mb-6">
                 <div className="flex items-center gap-4">
                   <div className="w-16 h-16 rounded-full bg-slate-100 border-2 border-slate-200 flex items-center justify-center overflow-hidden shadow-inner">
-                    <div className="scale-150 translate-y-4">
+                    <div className="scale-150 translate-y-1">
                       <BitmojiAvatar appearance={selectedStudent.appearance} />
                     </div>
                   </div>
